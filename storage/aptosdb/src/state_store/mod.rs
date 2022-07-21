@@ -3,7 +3,6 @@
 
 //! This file defines state store APIs that are related account state Merkle tree.
 
-use crate::jellyfish_merkle_node::JellyfishMerkleNodeSchema;
 use anyhow::{anyhow, ensure, format_err, Result};
 use aptos_crypto::{
     hash::{CryptoHash, SPARSE_MERKLE_PLACEHOLDER_HASH},
@@ -27,7 +26,6 @@ use aptos_types::{
     transaction::Version,
 };
 use executor_types::in_memory_state_calculator::InMemoryStateCalculator;
-use rayon::prelude::*;
 use schemadb::{ReadOptions, SchemaBatch, DB};
 use std::ops::Deref;
 use std::{collections::HashMap, sync::Arc};
