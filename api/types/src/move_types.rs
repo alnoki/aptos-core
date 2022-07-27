@@ -23,7 +23,7 @@ use move_deps::{
     move_resource_viewer::{AnnotatedMoveStruct, AnnotatedMoveValue},
 };
 
-use poem_openapi::{Enum, Object};
+use poem_openapi::{Enum, NewType, Object};
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
     collections::BTreeMap,
@@ -52,7 +52,7 @@ impl TryFrom<AnnotatedMoveStruct> for MoveResource {
     }
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq, Copy)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Copy, NewType)]
 pub struct U64(pub u64);
 
 impl U64 {
@@ -64,6 +64,18 @@ impl U64 {
 impl From<u64> for U64 {
     fn from(d: u64) -> Self {
         Self(d)
+    }
+}
+
+impl FromStr for U64 {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let data = s
+            .parse::<u64>()
+            .map_err(|e| format_err!("parse u64 string {:?} failed, caused by error: {}", s, e))?;
+
+        Ok(U64(data))
     }
 }
 
@@ -107,20 +119,8 @@ impl<'de> Deserialize<'de> for U64 {
     }
 }
 
-impl FromStr for U64 {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let data = s.parse::<u64>().map_err(|e| {
-            format_err!("Parsing u64 string {:?} failed, caused by error: {}", s, e)
-        })?;
-
-        Ok(U64(data))
-    }
-}
-
 #[derive(Clone, Debug, Default, PartialEq, Copy)]
-pub struct U128(pub u128);
+pub struct U128(u128);
 
 impl U128 {
     pub fn inner(&self) -> &u128 {
@@ -159,18 +159,6 @@ impl<'de> Deserialize<'de> for U128 {
     {
         let s = <String>::deserialize(deserializer)?;
         let data = s.parse::<u128>().map_err(D::Error::custom)?;
-
-        Ok(U128(data))
-    }
-}
-
-impl FromStr for U128 {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let data = s.parse::<u128>().map_err(|e| {
-            format_err!("Parsing u128 string {:?} failed, caused by error: {}", s, e)
-        })?;
 
         Ok(U128(data))
     }
@@ -276,7 +264,7 @@ impl TryFrom<AnnotatedMoveStruct> for MoveStructValue {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MoveValue {
     U8(u8),
     U64(U64),
@@ -516,6 +504,7 @@ impl fmt::Display for MoveType {
     }
 }
 
+// TODO: Make this actually work for generics and references.
 // Implementation is imperfect, only parses type tags,
 // can't parse generic type params and references.
 impl FromStr for MoveType {
@@ -984,10 +973,7 @@ impl fmt::Display for ScriptFunctionId {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        move_types::ScriptFunctionId, HexEncodedBytes, MoveModuleId, MoveResource, MoveType, U128,
-        U64,
-    };
+    use super::*;
 
     use aptos_types::account_address::AccountAddress;
     use move_deps::{
@@ -1183,6 +1169,41 @@ mod tests {
     }
 
     #[test]
+    fn test_serialize_deserialize_move_function() {
+        test_serialize_deserialize(
+            MoveFunction {
+                name: IdentifierWrapper::from_str("register").unwrap(),
+                visibility: MoveFunctionVisibility::Public,
+                is_entry: false,
+                generic_type_params: vec![MoveFunctionGenericTypeParam {
+                    constraints: vec![MoveAbility(Ability::Store)],
+                }],
+                params: vec![MoveType::Reference {
+                    mutable: false,
+                    to: Box::new(MoveType::Signer),
+                }],
+                return_: vec![],
+            },
+            json!({
+                "name": "register",
+                "visibility": "public",
+                "is_entry": false,
+                "generic_type_params": [
+                    {
+                        "constraints": [
+                            "store"
+                        ]
+                    }
+                ],
+                "params": [
+                    "&signer"
+                ],
+                "return": [],
+            }),
+        );
+    }
+
+    #[test]
     fn test_parse_invalid_move_script_function_id_string() {
         assert_eq!(
             "invalid script function id \"0x1\"",
@@ -1328,13 +1349,5 @@ mod tests {
 // with great caution, since it essentially rewrites the type to be a string
 // from the perspective of the OpenAPI spec, potentially losing some useful
 // type information that the client could use.
-impl_poem_type!(
-    MoveAbility,
-    MoveStructValue,
-    MoveType,
-    HexEncodedBytes,
-    MoveValue,
-    U64,
-    U128
-);
-impl_poem_parameter!(HexEncodedBytes, U64, U128);
+impl_poem_type!(MoveAbility, MoveStructValue, MoveType, HexEncodedBytes);
+impl_poem_parameter!(HexEncodedBytes);

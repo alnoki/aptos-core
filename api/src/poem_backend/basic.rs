@@ -7,7 +7,7 @@ use super::ApiTags;
 use crate::context::Context;
 use poem_openapi::{payload::Html, OpenApi};
 
-const OPEN_API_HTML: &str = include_str!("../../doc/spec.html");
+const OPEN_API_HTML: &str = include_str!("../../doc/v1/spec.html");
 
 pub struct BasicApi {
     pub context: Arc<Context>,
@@ -27,7 +27,7 @@ impl BasicApi {
         operation_id = "openapi",
         tag = "ApiTags::General"
     )]
-    async fn openapi(&self) -> Html<String> {
+    async fn spec(&self) -> Html<String> {
         Html(OPEN_API_HTML.to_string())
     }
 }

@@ -52,6 +52,7 @@ impl fmt::Display for EventKey {
     }
 }
 
+// TODO: don't do this
 impl_poem_type!(EventKey);
 impl_poem_parameter!(EventKey);
 

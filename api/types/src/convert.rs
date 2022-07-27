@@ -13,7 +13,7 @@ use crate::{
     TransactionInfo, TransactionOnChainData, TransactionPayload, UserTransactionRequest, WriteSet,
     WriteSetChange, WriteSetPayload,
 };
-use anyhow::{bail, ensure, format_err, Result};
+use anyhow::{bail, ensure, format_err, Context as AnyhowContext, Result};
 use aptos_crypto::{hash::CryptoHash, HashValue};
 use aptos_transaction_builder::error_explain;
 use aptos_types::state_store::table::TableHandle;
@@ -384,7 +384,8 @@ impl<'a, R: MoveResolverExt + ?Sized> MoveConverter<'a, R> {
         Ok(RawTransaction::new(
             sender.into(),
             sequence_number.into(),
-            self.try_into_aptos_core_transaction_payload(payload)?,
+            self.try_into_aptos_core_transaction_payload(payload)
+                .context("Failed to parse transaction payload")?,
             max_gas_amount.into(),
             gas_unit_price.into(),
             expiration_timestamp_secs.into(),

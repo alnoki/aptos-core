@@ -18,6 +18,10 @@ macro_rules! impl_poem_type {
 
             type RawElementValueType = Self;
 
+            // TODO: Determine whether this is the thing that decides what type
+            // it will be in the spec, and if so, make it configurable, so we
+            // can use this on things that are more complex in the spec than
+            // just strings.
             fn name() -> std::borrow::Cow<'static, str> {
                 format!("string({})", stringify!($ty)).into()
             }

@@ -44,6 +44,7 @@ pub use log::middleware_log;
 pub use post::AptosPost;
 pub use response::*;
 pub use runtime::attach_poem_to_runtime;
+pub use state::StateApi;
 pub use transactions::TransactionsApi;
 
 // TODO: Move these impls throughout each of the files in the parent directory.

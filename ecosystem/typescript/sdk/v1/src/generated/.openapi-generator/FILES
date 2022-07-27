@@ -1,0 +1,11 @@
+.gitignore
+apis/GeneralApi.ts
+apis/index.ts
+index.ts
+models/AccountData.ts
+models/IndexResponse.ts
+models/RoleType.ts
+models/index.ts
+runtime.ts
+servers.ts
+tsconfig.json

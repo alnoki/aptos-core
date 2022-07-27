@@ -86,6 +86,8 @@ For example, we use real AptosDB implementation in tests for API layers to inter
 
 Most of the utility functions are provided by the `TestContext`.
 
+todo add stuff for v0 vs v1
+
 ### Integration/Smoke Test
 
 Run integration/smoke tests in `testsuite/smoke-test`

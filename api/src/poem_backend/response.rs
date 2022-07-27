@@ -243,10 +243,12 @@ macro_rules! generate_success_response {
             $name(
                 $crate::poem_backend::AptosResponseContent<T>,
                 #[oai(header = "X-Aptos-Chain-Id")] u16,
-                #[oai(header = "X-Aptos-Ledger-Version")] U64,
-                #[oai(header = "X-Aptos-Ledger-Oldest-Version")] U64,
-                #[oai(header = "X-Aptos-Ledger-TimestampUsec")] U64,
-                #[oai(header = "X-Aptos-Epoch")] U64,
+                // We use just regular u64 here instead of U64 since all header
+                // values are implicitly strings anyway.
+                #[oai(header = "X-Aptos-Ledger-Version")] u64,
+                #[oai(header = "X-Aptos-Ledger-Oldest-Version")] u64,
+                #[oai(header = "X-Aptos-Ledger-TimestampUsec")] u64,
+                #[oai(header = "X-Aptos-Epoch")] u64,
             ),
             )*
 
@@ -298,10 +300,10 @@ macro_rules! generate_success_response {
                         $enum_name::$name(
                             value,
                             ledger_info.chain_id as u16,
-                            ledger_info.ledger_version,
-                            ledger_info.oldest_ledger_version,
-                            ledger_info.ledger_timestamp,
-                            ledger_info.epoch,
+                            ledger_info.ledger_version.into(),
+                            ledger_info.oldest_ledger_version.into(),
+                            ledger_info.ledger_timestamp.into(),
+                            ledger_info.epoch.into(),
                         )
                     },
                     )*
