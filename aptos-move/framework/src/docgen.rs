@@ -44,7 +44,7 @@ pub struct DocgenOptions {
     pub landing_page_template: Option<String>,
 
     /// Package-relative path to a file whose content is added to each generated markdown file.
-    /// This can contain common markdown references fpr this package (e.g. `[move-book]: <url>`).
+    /// This can contain common markdown references for this package (e.g. `[move-book]: <url>`).
     #[clap(long)]
     pub references_file: Option<String>,
 }
