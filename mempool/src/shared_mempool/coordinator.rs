@@ -67,6 +67,17 @@ pub(crate) async fn coordinator<V>(
     let workers_available = smp.config.shared_mempool_max_concurrent_inbound_syncs;
     let bounded_executor = BoundedExecutor::new(workers_available, executor.clone());
 
+    let initial_reconfig = mempool_reconfig_events
+        .next()
+        .await
+        .expect("Reconfig sender dropped, unable to start mempool");
+    handle_mempool_reconfig_event(
+        &mut smp,
+        &bounded_executor,
+        initial_reconfig.on_chain_configs,
+    )
+    .await;
+
     loop {
         let _timer = counters::MAIN_LOOP.start_timer();
         ::futures::select! {
@@ -182,7 +193,6 @@ fn handle_commit_notification<V>(
             })
             .collect(),
         msg.block_timestamp_usecs,
-        false,
     );
     smp.validator.write().notify_commit();
     let counter_result = if mempool_listener.ack_commit_notification(msg).is_err() {

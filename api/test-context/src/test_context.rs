@@ -8,8 +8,8 @@ use aptos_api_types::{
     X_APTOS_LEDGER_TIMESTAMP, X_APTOS_LEDGER_VERSION,
 };
 use aptos_config::config::{
-    NodeConfig, RocksdbConfigs, DEFAULT_MAX_NUM_NODES_PER_LRU_CACHE_SHARD,
-    NO_OP_STORAGE_PRUNER_CONFIG, TARGET_SNAPSHOT_SIZE,
+    NodeConfig, RocksdbConfigs, BUFFERED_STATE_TARGET_ITEMS,
+    DEFAULT_MAX_NUM_NODES_PER_LRU_CACHE_SHARD, NO_OP_STORAGE_PRUNER_CONFIG,
 };
 use aptos_crypto::{hash::HashValue, SigningKey};
 use aptos_mempool::mocks::MockSharedMempool;
@@ -113,7 +113,7 @@ pub fn new_test_context(test_name: String, use_db_with_indexer: bool) -> TestCon
                 NO_OP_STORAGE_PRUNER_CONFIG, /* pruner */
                 RocksdbConfigs::default(),
                 false, /* indexer */
-                TARGET_SNAPSHOT_SIZE,
+                BUFFERED_STATE_TARGET_ITEMS,
                 DEFAULT_MAX_NUM_NODES_PER_LRU_CACHE_SHARD,
             )
             .unwrap(),
@@ -306,6 +306,30 @@ impl TestContext {
     pub fn create_user_account(&self, account: &LocalAccount) -> SignedTransaction {
         let mut tc = self.root_account();
         self.create_user_account_by(&mut tc, account)
+    }
+
+    pub fn mint_user_account(&self, account: &LocalAccount) -> SignedTransaction {
+        let mut tc = self.root_account();
+        let factory = self.transaction_factory();
+        tc.sign_with_transaction_builder(
+            factory
+                .account_transfer(account.address(), 10_000_000)
+                .expiration_timestamp_secs(u64::MAX),
+        )
+    }
+
+    pub fn account_transfer(
+        &self,
+        sender: &mut LocalAccount,
+        receiver: &LocalAccount,
+        amount: u64,
+    ) -> SignedTransaction {
+        let factory = self.transaction_factory();
+        sender.sign_with_transaction_builder(
+            factory
+                .account_transfer(receiver.address(), amount)
+                .expiration_timestamp_secs(u64::MAX),
+        )
     }
 
     pub fn create_user_account_by(

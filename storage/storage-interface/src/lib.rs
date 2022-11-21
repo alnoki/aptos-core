@@ -50,6 +50,10 @@ pub mod sync_proof_fetcher;
 use crate::state_delta::StateDelta;
 pub use executed_trees::ExecutedTrees;
 
+// This is last line of defense against large queries slipping through external facing interfaces,
+// like the API and State Sync, etc.
+pub const MAX_REQUEST_LIMIT: u64 = 10000;
+
 pub trait StateSnapshotReceiver<K, V>: Send {
     fn add_chunk(&mut self, chunk: Vec<(K, V)>, proof: SparseMerkleRangeProof) -> Result<()>;
 
@@ -245,14 +249,15 @@ pub trait DbReader: Send + Sync {
         unimplemented!()
     }
 
-    /// Returns the key, value pairs for a particular state key prefix at at desired version. This
+    /// Returns the (key, value) iterator for a particular state key prefix at at desired version. This
     /// API can be used to get all resources of an account by passing the account address as the
     /// key prefix.
-    fn get_state_values_by_key_prefix(
+    fn get_prefixed_state_value_iterator(
         &self,
         key_prefix: &StateKeyPrefix,
+        cursor: Option<&StateKey>,
         version: Version,
-    ) -> Result<HashMap<StateKey, StateValue>> {
+    ) -> Result<Box<dyn Iterator<Item = Result<(StateKey, StateValue)>> + '_>> {
         unimplemented!()
     }
 
@@ -490,10 +495,6 @@ pub trait DbReader: Send + Sync {
 }
 
 impl MoveStorage for &dyn DbReader {
-    fn fetch_resource(&self, access_path: AccessPath) -> Result<Vec<u8>> {
-        self.fetch_resource_by_version(access_path, self.fetch_latest_state_checkpoint_version()?)
-    }
-
     fn fetch_resource_by_version(
         &self,
         access_path: AccessPath,

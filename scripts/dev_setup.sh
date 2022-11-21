@@ -20,10 +20,10 @@ KUBECTL_VERSION=1.18.6
 TERRAFORM_VERSION=0.12.26
 HELM_VERSION=3.2.4
 VAULT_VERSION=1.5.0
-Z3_VERSION=4.11.0
+Z3_VERSION=4.11.2
 CVC5_VERSION=0.0.3
 DOTNET_VERSION=6.0
-BOOGIE_VERSION=2.15.7
+BOOGIE_VERSION=2.15.8
 ALLURE_VERSION=2.15.pr1135
 # this is 3.21.4; the "3" is silent
 PROTOC_VERSION=21.4
@@ -615,6 +615,10 @@ function install_nodejs {
     install_pkg npm "$PACKAGE_MANAGER"
 }
 
+function install_pnpm {
+    curl -fsSL https://get.pnpm.io/install.sh | "${PRE_COMMAND[@]}" env PNPM_VERSION=7.14.2 bash -
+}
+
 function install_python3 {
   if [[ "$PACKAGE_MANAGER" == "apt-get" ]]; then
     install_pkg python3-all-dev "$PACKAGE_MANAGER"
@@ -642,6 +646,13 @@ function install_postgres {
   fi
 }
 
+function install_lld {
+  # Right now, only install lld for linux
+  if [[ "$(uname)" == "Linux" ]]; then
+    install_pkg lld "$PACKAGE_MANAGER"
+  fi
+}
+
 function welcome_message {
 cat <<EOF
 Welcome to Aptos!
@@ -664,6 +675,7 @@ Build tools (since -t or no option was provided):
   * libssl-dev
   * NodeJS / NPM
   * protoc (and related tools)
+  * lld (only for Linux)
 EOF
   fi
 
@@ -856,7 +868,7 @@ if [[ "$INSTALL_PROFILE" == "true" ]]; then
 fi
 
 install_pkg curl "$PACKAGE_MANAGER"
-
+install_pkg unzip "$PACKAGE_MANAGER"
 
 if [[ "$INSTALL_BUILD_TOOLS" == "true" ]]; then
   install_build_essentials "$PACKAGE_MANAGER"
@@ -866,6 +878,8 @@ if [[ "$INSTALL_BUILD_TOOLS" == "true" ]]; then
 
   install_openssl_dev "$PACKAGE_MANAGER"
   install_pkg_config "$PACKAGE_MANAGER"
+
+  install_lld
 
   install_rustup "$BATCH_MODE"
   install_toolchain "$(cat ./rust-toolchain)"
@@ -880,11 +894,14 @@ if [[ "$INSTALL_BUILD_TOOLS" == "true" ]]; then
   install_pkg git "$PACKAGE_MANAGER"
   install_lcov "$PACKAGE_MANAGER"
   install_nodejs "$PACKAGE_MANAGER"
+  install_pnpm "$PACKAGE_MANAGER"
+  install_pkg unzip "$PACKAGE_MANAGER"
   install_protoc
 fi
 
 if [[ "$INSTALL_PROTOC" == "true" ]]; then
   if [[ "$INSTALL_BUILD_TOOLS" == "false" ]]; then
+    install_pkg unzip "$PACKAGE_MANAGER"
     install_protoc
   fi
 fi

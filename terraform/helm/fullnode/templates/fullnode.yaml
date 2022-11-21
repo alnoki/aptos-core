@@ -33,7 +33,7 @@ spec:
         - -c
         - |-
           set -e
-          {{- if not .Values.chain.genesisConfigmap }}
+          {{- if and (not .Values.chain.genesisConfigmap) (not .Values.chain.genesisSecret) }}
           # Download genesis and waypoint if necessary
           curl -o /opt/aptos/genesis/waypoint.txt {{ (get .Values.aptos_chains .Values.chain.name).waypoint_txt_url }}
           curl -o /opt/aptos/genesis/genesis.blob {{ (get .Values.aptos_chains .Values.chain.name).genesis_blob_url }}
@@ -43,14 +43,8 @@ spec:
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         env:
-        {{- if .Values.logging.address }}
-        - name: STRUCT_LOG_TCP_ADDR
-          value: {{ $.Values.logging.address | quote }}
-        {{- end }}
         - name: RUST_LOG
           value: {{ .Values.rust_log }}
-        - name: RUST_LOG_REMOTE
-          value: {{ .Values.rust_log_remote }}
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:
@@ -74,12 +68,15 @@ spec:
           name: api
         - containerPort: 9101
           name: metrics
-        livenessProbe:
-          tcpSocket:
-            port: 9101
+        # NOTE: these require the API to be enabled, which is not always the case
+        livenessProbe: # restart the pod if the REST API is ever unresponsive
+          httpGet:
+            path: /v1/-/healthy
+            port: 8080
           initialDelaySeconds: 30
-        readinessProbe:
-          tcpSocket:
+        readinessProbe: # pod is ready when state sync is caught up
+          httpGet:
+            path: /v1/-/healthy?duration_secs=10
             port: 8080
         securityContext:
           readOnlyRootFilesystem: true
@@ -112,6 +109,9 @@ spec:
       {{- if .Values.chain.genesisConfigmap }}
         configMap:
           name: {{ .Values.chain.genesisConfigmap }}
+      {{- else if .Values.chain.genesisSecret }}
+        secret:
+          secretName: {{ .Values.chain.genesisSecret }}
       {{- else }}
         emptyDir: {}
       {{- end }}

@@ -17,12 +17,12 @@ module aptos_framework::aptos_governance {
     use std::signer;
     use std::string::{Self, String, utf8};
 
-    use aptos_std::event::{Self, EventHandle};
     use aptos_std::simple_map::{Self, SimpleMap};
     use aptos_std::table::{Self, Table};
 
     use aptos_framework::account::{Self, SignerCapability, create_signer_with_capability};
     use aptos_framework::coin;
+    use aptos_framework::event::{Self, EventHandle};
     use aptos_framework::governance_proposal::{Self, GovernanceProposal};
     use aptos_framework::reconfiguration;
     use aptos_framework::stake;
@@ -576,7 +576,11 @@ module aptos_framework::aptos_governance {
         vector::push_back(&mut active_validators, signer::address_of(proposer));
         vector::push_back(&mut active_validators, signer::address_of(yes_voter));
         vector::push_back(&mut active_validators, signer::address_of(no_voter));
-        stake::create_validator_set(aptos_framework, active_validators);
+        let (_sk_1, pk_1, _pop_1) = stake::generate_identity();
+        let (_sk_2, pk_2, _pop_2) = stake::generate_identity();
+        let (_sk_3, pk_3, _pop_3) = stake::generate_identity();
+        let pks = vector[pk_1, pk_2, pk_3];
+        stake::create_validator_set(aptos_framework, active_validators, pks);
 
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(aptos_framework);
         // Spread stake among active and pending_inactive because both need to be accounted for when computing voting

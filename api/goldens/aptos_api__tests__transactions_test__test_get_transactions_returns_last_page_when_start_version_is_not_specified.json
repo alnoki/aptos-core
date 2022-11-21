@@ -87,7 +87,6 @@
     "round": "1",
     "events": [
       {
-        "key": "0x03000000000000000000000000000000000000000000000000000000000000000000000000000001",
         "guid": {
           "creation_number": "3",
           "account_address": "0x1"
@@ -120,7 +119,7 @@
     "state_change_hash": "",
     "event_root_hash": "",
     "state_checkpoint_hash": null,
-    "gas_used": "667",
+    "gas_used": "1538",
     "success": true,
     "vm_status": "Executed successfully",
     "accumulator_root_hash": "",
@@ -242,7 +241,7 @@
     ],
     "sender": "0xa550c18",
     "sequence_number": "12",
-    "max_gas_amount": "100000",
+    "max_gas_amount": "1000000",
     "gas_unit_price": "0",
     "expiration_timestamp_secs": "18446744073709551615",
     "payload": {
@@ -255,12 +254,11 @@
     },
     "signature": {
       "public_key": "0x14418f867a0bd6d42abb2daa50cd68a5a869ce208282481f57504f630510d0d3",
-      "signature": "0x415d5cc5ffc37b09b13b112e79609c3bd113c217b8a35f752c816e90459ae23b3959bf60b0a4e0732aa5d0f4effc2ed136b2e25372e4dc23215580b6aad10b0e",
+      "signature": "0x6cfe245ec2ce64bb2ebed2f6366ac7e50f8e95da94cd5dad458e3969f288d9525ea4c1312c8d3e086abda14357d65142a771b6ac9ec47246f0e2fa024c90180e",
       "type": "ed25519_signature"
     },
     "events": [
       {
-        "key": "0x000000000000000048a951fe0ed12b29517867e00a3a09da55fcf859497b3f04bbed911cb75669c9",
         "guid": {
           "creation_number": "0",
           "account_address": "0x48a951fe0ed12b29517867e00a3a09da55fcf859497b3f04bbed911cb75669c9"
@@ -367,7 +365,6 @@
     "round": "1",
     "events": [
       {
-        "key": "0x03000000000000000000000000000000000000000000000000000000000000000000000000000001",
         "guid": {
           "creation_number": "3",
           "account_address": "0x1"
@@ -400,7 +397,7 @@
     "state_change_hash": "",
     "event_root_hash": "",
     "state_checkpoint_hash": null,
-    "gas_used": "667",
+    "gas_used": "1538",
     "success": true,
     "vm_status": "Executed successfully",
     "accumulator_root_hash": "",
@@ -522,7 +519,7 @@
     ],
     "sender": "0xa550c18",
     "sequence_number": "13",
-    "max_gas_amount": "100000",
+    "max_gas_amount": "1000000",
     "gas_unit_price": "0",
     "expiration_timestamp_secs": "18446744073709551615",
     "payload": {
@@ -535,12 +532,11 @@
     },
     "signature": {
       "public_key": "0x14418f867a0bd6d42abb2daa50cd68a5a869ce208282481f57504f630510d0d3",
-      "signature": "0x0f4444b11d1c1fb2b2a454290c9a73f53b96fc344ab41edf7b8181ee6ac0e2c91f9d76c55e1d22ba4fe31fd2aff438c9e3143d059e3180667e013b6a6382a60b",
+      "signature": "0x8fa482fe30aabf5200d8891a5f037dc91e0f84a44c843ae7cdc7937f6e96d69a44c043412e7008a48a006bebfbeb8a1a35f8ded6b8351b52aa38bb34bbc0b00e",
       "type": "ed25519_signature"
     },
     "events": [
       {
-        "key": "0x0000000000000000095f70f0272707f73ce63f9b09497324a7b2c9118d5d5fb22cb373efd916a681",
         "guid": {
           "creation_number": "0",
           "account_address": "0x95f70f0272707f73ce63f9b09497324a7b2c9118d5d5fb22cb373efd916a681"
@@ -647,7 +643,6 @@
     "round": "1",
     "events": [
       {
-        "key": "0x03000000000000000000000000000000000000000000000000000000000000000000000000000001",
         "guid": {
           "creation_number": "3",
           "account_address": "0x1"
@@ -680,7 +675,7 @@
     "state_change_hash": "",
     "event_root_hash": "",
     "state_checkpoint_hash": null,
-    "gas_used": "667",
+    "gas_used": "1538",
     "success": true,
     "vm_status": "Executed successfully",
     "accumulator_root_hash": "",
@@ -802,7 +797,7 @@
     ],
     "sender": "0xa550c18",
     "sequence_number": "14",
-    "max_gas_amount": "100000",
+    "max_gas_amount": "1000000",
     "gas_unit_price": "0",
     "expiration_timestamp_secs": "18446744073709551615",
     "payload": {
@@ -815,12 +810,11 @@
     },
     "signature": {
       "public_key": "0x14418f867a0bd6d42abb2daa50cd68a5a869ce208282481f57504f630510d0d3",
-      "signature": "0x012ba8bc73bc9a0ed24bcc2499ff1059beda8a52dbc97384326904ae251675815a16bbc76bad9f06cec5f8e606b2c6df938596bdf509dea482a4db7057b6020d",
+      "signature": "0x3094b54716c4cf7900ca976dc1582271471591df907366622a39fc62d17b87c02fa88b2f5454615ce3b019310477fbeee5ba808d8465c3f318ffa5786f65dc09",
       "type": "ed25519_signature"
     },
     "events": [
       {
-        "key": "0x00000000000000004c989e245d6ce3f3735edb8ef9f84c34d5e6f0991bea502b05cd1ea74d327a22",
         "guid": {
           "creation_number": "0",
           "account_address": "0x4c989e245d6ce3f3735edb8ef9f84c34d5e6f0991bea502b05cd1ea74d327a22"
@@ -927,7 +921,6 @@
     "round": "1",
     "events": [
       {
-        "key": "0x03000000000000000000000000000000000000000000000000000000000000000000000000000001",
         "guid": {
           "creation_number": "3",
           "account_address": "0x1"
@@ -960,7 +953,7 @@
     "state_change_hash": "",
     "event_root_hash": "",
     "state_checkpoint_hash": null,
-    "gas_used": "667",
+    "gas_used": "1538",
     "success": true,
     "vm_status": "Executed successfully",
     "accumulator_root_hash": "",
@@ -1082,7 +1075,7 @@
     ],
     "sender": "0xa550c18",
     "sequence_number": "15",
-    "max_gas_amount": "100000",
+    "max_gas_amount": "1000000",
     "gas_unit_price": "0",
     "expiration_timestamp_secs": "18446744073709551615",
     "payload": {
@@ -1095,12 +1088,11 @@
     },
     "signature": {
       "public_key": "0x14418f867a0bd6d42abb2daa50cd68a5a869ce208282481f57504f630510d0d3",
-      "signature": "0x740b891f0b91397385ae6558c2a6a7e00a253bbc1678799e3c65dc2b3f0d3dd539ec877d879e8a85e94a3f8c6df38931e6b69304414610665446a986ca842605",
+      "signature": "0xd26e938d26da477f656d9edda518892cbeede12e8ad3da1ccb5fe889be047c2584f578cac231df5184a68f405f3f12cd0db41c77cf6e5d42a9e0a11bca59b500",
       "type": "ed25519_signature"
     },
     "events": [
       {
-        "key": "0x000000000000000046925daed0a8767bb9437ccccfdf31a1d349a05659710ca0ebe6205d0e5d737e",
         "guid": {
           "creation_number": "0",
           "account_address": "0x46925daed0a8767bb9437ccccfdf31a1d349a05659710ca0ebe6205d0e5d737e"
@@ -1207,7 +1199,6 @@
     "round": "1",
     "events": [
       {
-        "key": "0x03000000000000000000000000000000000000000000000000000000000000000000000000000001",
         "guid": {
           "creation_number": "3",
           "account_address": "0x1"
@@ -1240,7 +1231,7 @@
     "state_change_hash": "",
     "event_root_hash": "",
     "state_checkpoint_hash": null,
-    "gas_used": "667",
+    "gas_used": "1538",
     "success": true,
     "vm_status": "Executed successfully",
     "accumulator_root_hash": "",
@@ -1362,7 +1353,7 @@
     ],
     "sender": "0xa550c18",
     "sequence_number": "16",
-    "max_gas_amount": "100000",
+    "max_gas_amount": "1000000",
     "gas_unit_price": "0",
     "expiration_timestamp_secs": "18446744073709551615",
     "payload": {
@@ -1375,12 +1366,11 @@
     },
     "signature": {
       "public_key": "0x14418f867a0bd6d42abb2daa50cd68a5a869ce208282481f57504f630510d0d3",
-      "signature": "0xdf59bf7d52ec24c5f4981aba8941e8ff6a8373ba2599b1b6e20d01816223bab0256f19cb047c7c1ddc827719bb19dd826ab17ff5aa0fe82844e0fd7da6d10801",
+      "signature": "0x3da636b94ee39d41c3bd26f60a05cfc7210ba2be448c3d0aa2f23ca5301ebc9f63e190a97bcdf1558824005c738627919a19a24ab0f9a5edb48a1052b697d708",
       "type": "ed25519_signature"
     },
     "events": [
       {
-        "key": "0x0000000000000000fcad780f86d4ee8a3a200bb9289f77eb824bf1d6c155c8d007fc128bfbc33e06",
         "guid": {
           "creation_number": "0",
           "account_address": "0xfcad780f86d4ee8a3a200bb9289f77eb824bf1d6c155c8d007fc128bfbc33e06"
@@ -1487,7 +1477,6 @@
     "round": "1",
     "events": [
       {
-        "key": "0x03000000000000000000000000000000000000000000000000000000000000000000000000000001",
         "guid": {
           "creation_number": "3",
           "account_address": "0x1"
@@ -1520,7 +1509,7 @@
     "state_change_hash": "",
     "event_root_hash": "",
     "state_checkpoint_hash": null,
-    "gas_used": "667",
+    "gas_used": "1538",
     "success": true,
     "vm_status": "Executed successfully",
     "accumulator_root_hash": "",
@@ -1642,7 +1631,7 @@
     ],
     "sender": "0xa550c18",
     "sequence_number": "17",
-    "max_gas_amount": "100000",
+    "max_gas_amount": "1000000",
     "gas_unit_price": "0",
     "expiration_timestamp_secs": "18446744073709551615",
     "payload": {
@@ -1655,12 +1644,11 @@
     },
     "signature": {
       "public_key": "0x14418f867a0bd6d42abb2daa50cd68a5a869ce208282481f57504f630510d0d3",
-      "signature": "0x2373bfdac2f8b16d237ec6ed5fc57f28ac8985202f1d9f71105dc35f596e05718885dd03e738fb12fb5421db8f81c675db32fd683dfe436b1d7126301f06f003",
+      "signature": "0x18fb3b0dfcbef70fb66cb6d8fc6f6b73fb5c2f8643892f59dfd07ea47fc7c3d472c3f6b1eaacd0d3935e29532732621bf6873abb4e5ff608622922b032d9a606",
       "type": "ed25519_signature"
     },
     "events": [
       {
-        "key": "0x0000000000000000099acce340661e0c847ca95ff58ced5f474bc30ca7972106e6a90055c1bdeb26",
         "guid": {
           "creation_number": "0",
           "account_address": "0x99acce340661e0c847ca95ff58ced5f474bc30ca7972106e6a90055c1bdeb26"
@@ -1767,7 +1755,6 @@
     "round": "1",
     "events": [
       {
-        "key": "0x03000000000000000000000000000000000000000000000000000000000000000000000000000001",
         "guid": {
           "creation_number": "3",
           "account_address": "0x1"
@@ -1800,7 +1787,7 @@
     "state_change_hash": "",
     "event_root_hash": "",
     "state_checkpoint_hash": null,
-    "gas_used": "667",
+    "gas_used": "1538",
     "success": true,
     "vm_status": "Executed successfully",
     "accumulator_root_hash": "",
@@ -1922,7 +1909,7 @@
     ],
     "sender": "0xa550c18",
     "sequence_number": "18",
-    "max_gas_amount": "100000",
+    "max_gas_amount": "1000000",
     "gas_unit_price": "0",
     "expiration_timestamp_secs": "18446744073709551615",
     "payload": {
@@ -1935,12 +1922,11 @@
     },
     "signature": {
       "public_key": "0x14418f867a0bd6d42abb2daa50cd68a5a869ce208282481f57504f630510d0d3",
-      "signature": "0xaf3f20a43eda7fd8a7520b1b61adc1ea0625b7c1bf91da32d66c7c4af6c558cdbf83b40358b12a21dfca76aeb18de69a5ffe86d92d75698bce54a12623658308",
+      "signature": "0xca705ca68bb833c25d4a13ee1de8ef4bf8895fb2be5cab8846f310880b3f022d87a4b721d64323225ebc817028c167810b1bd5b0f1c61d66104bcc1fff003a0e",
       "type": "ed25519_signature"
     },
     "events": [
       {
-        "key": "0x0000000000000000e9be740413c5f028e58ca77e0540355874c210b49bcd8a75db8880a7ac3273cd",
         "guid": {
           "creation_number": "0",
           "account_address": "0xe9be740413c5f028e58ca77e0540355874c210b49bcd8a75db8880a7ac3273cd"
@@ -2047,7 +2033,6 @@
     "round": "1",
     "events": [
       {
-        "key": "0x03000000000000000000000000000000000000000000000000000000000000000000000000000001",
         "guid": {
           "creation_number": "3",
           "account_address": "0x1"
@@ -2080,7 +2065,7 @@
     "state_change_hash": "",
     "event_root_hash": "",
     "state_checkpoint_hash": null,
-    "gas_used": "667",
+    "gas_used": "1538",
     "success": true,
     "vm_status": "Executed successfully",
     "accumulator_root_hash": "",
@@ -2202,7 +2187,7 @@
     ],
     "sender": "0xa550c18",
     "sequence_number": "19",
-    "max_gas_amount": "100000",
+    "max_gas_amount": "1000000",
     "gas_unit_price": "0",
     "expiration_timestamp_secs": "18446744073709551615",
     "payload": {
@@ -2215,12 +2200,11 @@
     },
     "signature": {
       "public_key": "0x14418f867a0bd6d42abb2daa50cd68a5a869ce208282481f57504f630510d0d3",
-      "signature": "0xb774c55b039b76be6d7c3807d62829da2e702b88dd334041337ac623f588e74b821322c5855b1a229c38e8d8af2d287ea8b60bcc55fa658400fe5c42ca7c8300",
+      "signature": "0x4db4a6430260cce5ea5c708393e71b25805db3e7eff251ecb7f986fcf4c4d66c04abfff78a2edb200ecebc0ea4b0bcc1484f5fef834d838b2f13784189a08004",
       "type": "ed25519_signature"
     },
     "events": [
       {
-        "key": "0x0000000000000000626d590a97d6b59c93711a3cdc7aea92eca7fc5c3615084f43394791f1d6d300",
         "guid": {
           "creation_number": "0",
           "account_address": "0x626d590a97d6b59c93711a3cdc7aea92eca7fc5c3615084f43394791f1d6d300"

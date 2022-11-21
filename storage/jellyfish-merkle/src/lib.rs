@@ -79,7 +79,7 @@ pub mod restore;
 #[cfg(any(test, feature = "fuzzing"))]
 pub mod test_helper;
 
-use crate::metrics::APTOS_JELLYFISH_LEAF_COUNT;
+use crate::metrics::{APTOS_JELLYFISH_LEAF_COUNT, APTOS_JELLYFISH_LEAF_DELETION_COUNT};
 use anyhow::{bail, ensure, format_err, Result};
 use aptos_crypto::{
     hash::{CryptoHash, SPARSE_MERKLE_PLACEHOLDER_HASH},
@@ -344,7 +344,7 @@ where
         }
     }
 
-    /// Get the node hash from the cache if exists, otherwise compute it.
+    /// Get the node hash from the cache if cache is provided, otherwise (for test only) compute it.
     fn get_hash(
         node_key: &NodeKey,
         node: &Node<K>,
@@ -631,6 +631,7 @@ where
                 let new_leaf_node = Node::new_leaf(key, *value_hash, (state_key.clone(), version));
                 Ok(Some(new_leaf_node))
             } else {
+                APTOS_JELLYFISH_LEAF_DELETION_COUNT.inc();
                 Ok(None)
             }
         } else {

@@ -179,8 +179,31 @@ variable "enable_forge" {
   default     = false
 }
 
+variable "forge_config_s3_bucket" {
+  description = "S3 bucket in which Forge config is stored"
+  default     = "forge-wrapper-config"
+}
+
 variable "forge_helm_values" {
   description = "Map of values to pass to Forge Helm"
   type        = any
   default     = {}
+}
+
+variable "validator_storage_class" {
+  description = "Which storage class to use for the validator and fullnode"
+  default     = "io1"
+  validation {
+    condition     = contains(["gp3", "io1", "io2"], var.validator_storage_class)
+    error_message = "Supported storage classes are gp3, io1, io2"
+  }
+}
+
+variable "fullnode_storage_class" {
+  description = "Which storage class to use for the validator and fullnode"
+  default     = "io1"
+  validation {
+    condition     = contains(["gp3", "io1", "io2"], var.fullnode_storage_class)
+    error_message = "Supported storage classes are gp3, io1, io2"
+  }
 }

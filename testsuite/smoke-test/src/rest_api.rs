@@ -37,8 +37,8 @@ async fn test_basic_client() {
     //            test to pass.
     //            Is this caused by us increasing the default max gas amount in
     //            testsuite/forge/src/interface/aptos.rs?
-    let mut account1 = info.create_and_fund_user_account(100_000).await.unwrap();
-    let account2 = info.create_and_fund_user_account(100_000).await.unwrap();
+    let mut account1 = info.create_and_fund_user_account(10_000_000).await.unwrap();
+    let account2 = info.create_and_fund_user_account(10_000_000).await.unwrap();
 
     let tx = account1.sign_with_transaction_builder(
         info.transaction_factory()
@@ -94,11 +94,11 @@ async fn test_gas_estimation() {
         "No transactions should equate to lowest gas price"
     );
     let account1 = public_info
-        .create_and_fund_user_account(1000000)
+        .create_and_fund_user_account(100_000_000)
         .await
         .expect("Should create account");
     let account2 = public_info
-        .create_and_fund_user_account(1000000)
+        .create_and_fund_user_account(100_000_000)
         .await
         .expect("Should create account");
 
@@ -189,10 +189,16 @@ async fn test_bcs() {
     let mut info = swarm.aptos_public_info();
 
     // Create accounts
-    let mut local_account = info.create_and_fund_user_account(10000000).await.unwrap();
+    let mut local_account = info
+        .create_and_fund_user_account(100_000_000)
+        .await
+        .unwrap();
     let account = local_account.address();
     let public_key = local_account.public_key();
-    let other_local_account = info.create_and_fund_user_account(10000000).await.unwrap();
+    let other_local_account = info
+        .create_and_fund_user_account(100_000_000)
+        .await
+        .unwrap();
 
     let client = info.client();
     // Check get account
@@ -266,10 +272,7 @@ async fn test_bcs() {
         .unwrap();
     let expected_txn_hash = pending_transaction.hash.into();
     let expected_txn = client
-        .wait_for_transaction_by_hash_bcs(
-            expected_txn_hash,
-            pending_transaction.request.expiration_timestamp_secs.0,
-        )
+        .wait_for_transaction_bcs(&pending_transaction)
         .await
         .unwrap()
         .into_inner();

@@ -13,8 +13,8 @@ use crate::{
     transaction_generator::TransactionGenerator,
 };
 use aptos_config::config::{
-    NodeConfig, PrunerConfig, RocksdbConfigs, DEFAULT_MAX_NUM_NODES_PER_LRU_CACHE_SHARD,
-    NO_OP_STORAGE_PRUNER_CONFIG, TARGET_SNAPSHOT_SIZE,
+    NodeConfig, PrunerConfig, RocksdbConfigs, BUFFERED_STATE_TARGET_ITEMS,
+    DEFAULT_MAX_NUM_NODES_PER_LRU_CACHE_SHARD, NO_OP_STORAGE_PRUNER_CONFIG,
 };
 use aptos_jellyfish_merkle::metrics::{
     APTOS_JELLYFISH_INTERNAL_ENCODED_BYTES, APTOS_JELLYFISH_LEAF_ENCODED_BYTES,
@@ -35,7 +35,7 @@ pub fn init_db_and_executor(config: &NodeConfig) -> (DbReaderWriter, BlockExecut
             config.storage.storage_pruner_config,
             RocksdbConfigs::default(),
             false,
-            config.storage.target_snapshot_size,
+            config.storage.buffered_state_target_items,
             config.storage.max_num_nodes_per_lru_cache_shard,
         )
         .expect("DB should open."),
@@ -59,7 +59,7 @@ fn create_checkpoint(source_dir: impl AsRef<Path>, checkpoint_dir: impl AsRef<Pa
         NO_OP_STORAGE_PRUNER_CONFIG, /* pruner */
         RocksdbConfigs::default(),
         false,
-        TARGET_SNAPSHOT_SIZE,
+        BUFFERED_STATE_TARGET_ITEMS,
         DEFAULT_MAX_NUM_NODES_PER_LRU_CACHE_SHARD,
     )
     .expect("db open failure.")
@@ -200,8 +200,8 @@ mod tests {
         crate::db_generator::run(
             25, /* num_accounts */
             // TODO(Gas): double check if this is correct
-            10_000, /* init_account_balance */
-            5,      /* block_size */
+            100_000_000, /* init_account_balance */
+            5,           /* block_size */
             storage_dir.as_ref(),
             NO_OP_STORAGE_PRUNER_CONFIG, /* prune_window */
             true,

@@ -12,12 +12,10 @@ on:
 jobs:
   # Test under sub optimal circumstances (network delay)
   run-forge-three-region:
-
     uses: ./.github/workflows/run-forge.yaml
     secrets: inherit
     with:
       FORGE_NAMESPACE: forge-three-region
-      FORGE_CLUSTER_NAME: aptos-forge-big-1
       # Run for 30 minutes
       FORGE_RUNNER_DURATION_SECS: 1800
       # Pre release has chaos applied

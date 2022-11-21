@@ -18,11 +18,10 @@ use crate::natives::cryptography::multi_ed25519;
 use aggregator_natives::{aggregator, aggregator_factory};
 use cryptography::ed25519;
 use gas_algebra_ext::AbstractValueSize;
-use move_deps::{
-    move_core_types::{account_address::AccountAddress, identifier::Identifier},
-    move_vm_runtime::native_functions::{make_table_from_iter, NativeFunctionTable},
-    move_vm_types::values::Value,
-};
+
+use move_core_types::{account_address::AccountAddress, identifier::Identifier};
+use move_vm_runtime::native_functions::{make_table_from_iter, NativeFunctionTable};
+use move_vm_types::values::Value;
 
 pub mod status {
     // Failure in parsing a struct type tag
@@ -119,6 +118,18 @@ impl GasParameters {
                     base: 0.into(),
                     per_byte: 0.into(),
                 },
+                sha2_512: hash::Sha2_512HashGasParameters {
+                    base: 0.into(),
+                    per_byte: 0.into(),
+                },
+                sha3_512: hash::Sha3_512HashGasParameters {
+                    base: 0.into(),
+                    per_byte: 0.into(),
+                },
+                ripemd160: hash::Ripemd160HashGasParameters {
+                    base: 0.into(),
+                    per_byte: 0.into(),
+                },
             },
             type_info: type_info::GasParameters {
                 type_of: type_info::TypeOfGasParameters {
@@ -129,6 +140,7 @@ impl GasParameters {
                     base: 0.into(),
                     per_byte_in_str: 0.into(),
                 },
+                chain_id: type_info::ChainIdGasParameters { base: 0.into() },
             },
             util: util::GasParameters {
                 from_bytes: util::FromBytesGasParameters {

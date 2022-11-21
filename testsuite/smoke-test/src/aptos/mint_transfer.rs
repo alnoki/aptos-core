@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::smoke_test_environment::new_local_swarm_with_aptos;
+use aptos_debugger::AptosDebugger;
+use aptos_types::transaction::{ExecutionStatus, TransactionStatus};
 use cached_packages::aptos_stdlib;
 use forge::Swarm;
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 async fn test_mint_transfer() {
     let mut swarm = new_local_swarm_with_aptos(1).await;
     let mut info = swarm.aptos_public_info();
@@ -23,11 +25,11 @@ async fn test_mint_transfer() {
     //            test to pass.
     //            Is this caused by us increasing the default max gas amount in
     //            testsuite/forge/src/interface/aptos.rs?
-    info.mint(account1.address(), 1_000_000).await.unwrap();
+    info.mint(account1.address(), 100_000_000).await.unwrap();
 
     let transfer_txn = account1.sign_with_transaction_builder(
         info.transaction_factory()
-            .payload(aptos_stdlib::aptos_coin_transfer(account2.address(), 400)),
+            .payload(aptos_stdlib::aptos_coin_transfer(account2.address(), 40000)),
     );
     info.client().submit_and_wait(&transfer_txn).await.unwrap();
     assert_eq!(
@@ -37,7 +39,7 @@ async fn test_mint_transfer() {
             .unwrap()
             .into_inner()
             .get(),
-        400
+        40000
     );
 
     // test delegation
@@ -62,7 +64,29 @@ async fn test_mint_transfer() {
     );
     info.client().submit_and_wait(&claim_txn).await.unwrap();
     let mint_txn = account1.sign_with_transaction_builder(
-        txn_factory.payload(aptos_stdlib::aptos_coin_mint(account1.address(), 100)),
+        txn_factory.payload(aptos_stdlib::aptos_coin_mint(account1.address(), 10000)),
     );
     info.client().submit_and_wait(&mint_txn).await.unwrap();
+
+    // Testing the AptosDebugger by reexecuting the transaction that has been published.
+    println!("Testing....");
+    let debugger = AptosDebugger::rest_client(info.client().clone()).unwrap();
+
+    let txn_ver = debugger
+        .get_version_by_account_sequence(account1.address(), 0)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let output = debugger
+        .execute_past_transactions(txn_ver, 1)
+        .await
+        .unwrap()
+        .pop()
+        .unwrap();
+
+    assert_eq!(
+        output.status(),
+        &TransactionStatus::Keep(ExecutionStatus::Success)
+    );
 }

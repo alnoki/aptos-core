@@ -7,12 +7,14 @@ use async_trait::async_trait;
 use cached_packages::aptos_stdlib;
 use clap::Parser;
 
-// TODO(Gas): double check if this is correct
-// TODO(greg): revisit after fixing gas estimation
-pub const DEFAULT_FUNDED_COINS: u64 = 500_000;
+// 1 APT
+pub const DEFAULT_FUNDED_COINS: u64 = 100_000_000;
 
-/// Command to create a new account on-chain
+/// Create a new account on-chain
 ///
+/// An account can be created by transferring coins, or by making an explicit
+/// call to create an account.  This will create an account with no coins, and
+/// any coins will have to transferred afterwards.
 #[derive(Debug, Parser)]
 pub struct CreateAccount {
     /// Address of the new account

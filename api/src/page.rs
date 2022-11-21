@@ -35,7 +35,7 @@ impl Page {
     }
 
     /// Retrieve the start of the page
-    pub fn start<E: BadRequestError>(
+    fn start<E: BadRequestError>(
         &self,
         default: u64,
         max: u64,
@@ -62,24 +62,36 @@ impl Page {
 
     /// Get the page size for the request
     pub fn limit<E: BadRequestError>(&self, ledger_info: &LedgerInfo) -> Result<u16, E> {
-        let limit = self.limit.unwrap_or(DEFAULT_PAGE_SIZE);
-        if limit == 0 {
-            return Err(E::bad_request_with_code(
-                &format!("Given limit value ({}) must not be zero", limit),
-                AptosErrorCode::InvalidInput,
-                ledger_info,
-            ));
-        }
-        if limit > self.max_page_size {
-            return Err(E::bad_request_with_code(
-                &format!(
-                    "Given limit value ({}) is too large, it must be < {}",
-                    limit, self.max_page_size
-                ),
-                AptosErrorCode::InvalidInput,
-                ledger_info,
-            ));
-        }
+        determine_limit(
+            self.limit,
+            self.max_page_size,
+            DEFAULT_PAGE_SIZE,
+            ledger_info,
+        )
+    }
+}
+
+pub fn determine_limit<E: BadRequestError>(
+    // The limit requested by the user, if any.
+    requested_limit: Option<u16>,
+    // The default limit to use, if requested_limit is None.
+    default_limit: u16,
+    // The ceiling on the limit. If the requested value is higher than this, we just use this value.
+    max_limit: u16,
+    ledger_info: &LedgerInfo,
+) -> Result<u16, E> {
+    let limit = requested_limit.unwrap_or(default_limit);
+    if limit == 0 {
+        return Err(E::bad_request_with_code(
+            &format!("Given limit value ({}) must not be zero", limit),
+            AptosErrorCode::InvalidInput,
+            ledger_info,
+        ));
+    }
+    // If we go over the max page size, we return the max page size
+    if limit > max_limit {
+        Ok(max_limit)
+    } else {
         Ok(limit)
     }
 }

@@ -1,22 +1,27 @@
 // Copyright (c) Aptos
 // SPDX-License-Identifier: Apache-2.0
 
-use move_deps::{
-    move_binary_format::errors::{PartialVMError, PartialVMResult},
-    move_core_types::{
-        gas_algebra::{InternalGas, InternalGasPerByte, NumBytes},
-        vm_status::StatusCode,
-    },
-    move_vm_runtime::native_functions::{NativeContext, NativeFunction},
-    move_vm_types::{
-        loaded_data::runtime_types::Type, natives::function::NativeResult, pop_arg, values::Value,
-    },
+use move_binary_format::errors::{PartialVMError, PartialVMResult};
+use move_core_types::{
+    gas_algebra::{InternalGas, InternalGasPerByte, NumBytes},
+    vm_status::StatusCode,
+};
+use move_vm_runtime::native_functions::{NativeContext, NativeFunction};
+use move_vm_types::{
+    loaded_data::runtime_types::Type, natives::function::NativeResult, pop_arg, values::Value,
 };
 use smallvec::smallvec;
 use std::{collections::VecDeque, sync::Arc};
 
 /// Abort code when from_bytes fails (0x01 == INVALID_ARGUMENT)
 const EFROM_BYTES: u64 = 0x01_0001;
+
+/// Wraps a test-only native function inside an Arc<UnboxedNativeFunction>.
+pub fn make_test_only_native_from_func(
+    func: fn(&mut NativeContext, Vec<Type>, VecDeque<Value>) -> PartialVMResult<NativeResult>,
+) -> NativeFunction {
+    Arc::new(func)
+}
 
 /// Used to pass gas parameters into native functions.
 pub fn make_native_from_func<T: std::marker::Send + std::marker::Sync + 'static>(
@@ -31,7 +36,7 @@ pub fn make_native_from_func<T: std::marker::Send + std::marker::Sync + 'static>
 macro_rules! pop_vec_arg {
     ($arguments:ident, $t:ty) => {{
         // Replicating the code from pop_arg! here
-        use move_deps::move_vm_types::natives::function::{PartialVMError, StatusCode};
+        use move_vm_types::natives::function::{PartialVMError, StatusCode};
         let value_vec = match $arguments.pop_back().map(|v| v.value_as::<Vec<Value>>()) {
             None => {
                 return Err(PartialVMError::new(

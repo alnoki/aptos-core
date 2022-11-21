@@ -4,7 +4,7 @@
 use crate::{
     block_storage::BlockStore,
     liveness::{
-        proposal_generator::ProposalGenerator,
+        proposal_generator::{ChainHealthBackoffConfig, ProposalGenerator},
         rotating_proposer_election::RotatingProposer,
         round_state::{ExponentialTimeInterval, NewRoundEvent, NewRoundReason, RoundState},
     },
@@ -16,9 +16,10 @@ use crate::{
     test_utils::{EmptyStateComputer, MockPayloadManager, MockStorage},
     util::{mock_time_service::SimulatedTimeService, time_service::TimeService},
 };
+use aptos_config::config::ConsensusConfig;
 use aptos_infallible::Mutex;
-use aptos_types::aggregate_signature::AggregateSignature;
 use aptos_types::{
+    aggregate_signature::AggregateSignature,
     epoch_change::EpochChangeProof,
     epoch_state::EpochState,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
@@ -150,6 +151,7 @@ fn create_node_for_fuzzing() -> RoundManager {
         1,
         1024,
         10,
+        ChainHealthBackoffConfig::new_no_backoff(),
     );
 
     //
@@ -173,10 +175,9 @@ fn create_node_for_fuzzing() -> RoundManager {
         ))),
         network,
         storage,
-        false,
         OnChainConsensusConfig::default(),
         round_manager_tx,
-        2000,
+        ConsensusConfig::default(),
     )
 }
 

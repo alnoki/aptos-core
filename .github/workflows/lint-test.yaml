@@ -43,13 +43,16 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7.14.2
       # install packages for examples
-      - run: cd ./ecosystem/typescript/sdk/examples/typescript && yarn install
-      - run: cd ./ecosystem/typescript/sdk/examples/javascript && yarn install
+      - run: cd ./ecosystem/typescript/sdk/examples/typescript && pnpm install
+      - run: cd ./ecosystem/typescript/sdk/examples/javascript && pnpm install
       # Run package build+lint + tests
-      - run: cd ./ecosystem/typescript/sdk && yarn install
-      - run: cd ./ecosystem/typescript/sdk && yarn lint
-      - run: cd ./ecosystem/typescript/sdk && yarn fmt:check
+      - run: cd ./ecosystem/typescript/sdk && pnpm install
+      - run: cd ./ecosystem/typescript/sdk && pnpm lint
+      - run: cd ./ecosystem/typescript/sdk && pnpm fmt:check
 
   docs-lint:
     runs-on: ubuntu-latest
@@ -58,8 +61,22 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
-      - run: yarn lint
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7.14.2
+      - run: pnpm lint
         working-directory: developer-docs-site
+      - run: sudo apt update -y && sudo apt install -y aspell aspell-en
+      - run: pnpm spellcheck
+        working-directory: developer-docs-site
+
+  rust-cryptohasher-domain-separation-check:
+    runs-on: high-perf-docker
+    steps:
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3
+      - uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984
+      - uses: ./.github/actions/rust-setup
+      - run: python3 scripts/check-cryptohasher-symbols.py
 
   rust-lint:
     runs-on: high-perf-docker
@@ -77,7 +94,7 @@ jobs:
         with:
           fetch-depth: 0 # get all the history because cargo xtest --change-since origin/main requires it.
       - uses: ./.github/actions/rust-setup
-      - run: cargo test --doc --workspace --exclude aptos-node-checker
+      - run: cargo test --locked --doc --workspace --exclude aptos-node-checker
 
   rust-unit-test:
     runs-on: high-perf-docker
@@ -90,7 +107,7 @@ jobs:
       - uses: taiki-e/install-action@v1.5.6
         with:
           tool: nextest
-      - run: cargo nextest run --profile ci --workspace --exclude smoke-test --exclude backup-cli --exclude testcases --retries 3 --no-fail-fast
+      - run: cargo nextest run --profile ci --locked --workspace --exclude smoke-test --exclude testcases --retries 3 --no-fail-fast
         env:
           INDEXER_DATABASE_URL: postgresql://postgres@localhost/postgres
 
@@ -103,15 +120,16 @@ jobs:
       - uses: taiki-e/install-action@v1.5.6
         with:
           tool: nextest
-      # prebuild node binary, so that tests don't start before node is built.
+      # prebuild aptos-node binary, so that tests don't start before node is built.
+      # also prebuild aptos-node binary as a separate step to avoid feature unification issues
       # --test-threads is intentionally set to reduce resource contention in ci jobs. Increasing this, increases job failures and retries.
-      - run: cargo build --bin=aptos-node --features=failpoints,indexer --release && LOCAL_SWARM_NODE_RELEASE=1 cargo nextest run --release --profile ci --package smoke-test --test-threads 6 --retries 3
+      - run: cargo build --locked --package=aptos-node --features=failpoints,indexer --release && LOCAL_SWARM_NODE_RELEASE=1 cargo nextest run --release --profile ci --package smoke-test --test-threads 6 --retries 3
         env:
           INDEXER_DATABASE_URL: postgresql://postgres@localhost/postgres
 
-      - name: Upload smoke test logs for failures
+      # We always try to create the artifact, but it only creates on flaky or failed smoke tests -- when the directories are empty.
+      - name: Upload smoke test logs for failed and flaky tests
         uses: actions/upload-artifact@v3
-        if: failure()
         with:
           name: failed-smoke-test-logs
           # Retain all smoke test data except for the db (which may be large).
@@ -120,8 +138,15 @@ jobs:
             !/tmp/.tmp*/**/db/
           retention-days: 1
 
-  python-unit-test:
-    uses: ./.github/workflows/python-unit-test.yaml
+  check-vm-features:
+    runs-on: high-perf-docker
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/rust-setup
+      - run: cargo test --locked --features check-vm-features -p aptos-node
+
+  python-lint-test:
+    uses: ./.github/workflows/python-lint-test.yaml
 
   helm-lint:
     uses: ./.github/workflows/helm-lint.yaml

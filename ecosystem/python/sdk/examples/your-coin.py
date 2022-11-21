@@ -18,11 +18,8 @@ from aptos_sdk.account import Account
 from aptos_sdk.account_address import AccountAddress
 from aptos_sdk.bcs import Serializer
 from aptos_sdk.client import FaucetClient, RestClient
-from aptos_sdk.transactions import (
-    EntryFunction,
-    TransactionArgument,
-    TransactionPayload,
-)
+from aptos_sdk.transactions import (EntryFunction, TransactionArgument,
+                                    TransactionPayload)
 from aptos_sdk.type_tag import StructTag, TypeTag
 
 from .common import FAUCET_URL, NODE_URL
@@ -35,8 +32,7 @@ class CoinClient(RestClient):
         payload = EntryFunction.natural(
             "0x1::managed_coin",
             "register",
-            [TypeTag(StructTag.from_str(
-                f"{coin_address}::moon_coin::MoonCoin"))],
+            [TypeTag(StructTag.from_str(f"{coin_address}::moon_coin::MoonCoin"))],
             [],
         )
         signed_transaction = self.create_single_signer_bcs_transaction(
@@ -52,8 +48,7 @@ class CoinClient(RestClient):
         payload = EntryFunction.natural(
             "0x1::managed_coin",
             "mint",
-            [TypeTag(StructTag.from_str(
-                f"{minter.address()}::moon_coin::MoonCoin"))],
+            [TypeTag(StructTag.from_str(f"{minter.address()}::moon_coin::MoonCoin"))],
             [
                 TransactionArgument(receiver_address, Serializer.struct),
                 TransactionArgument(amount, Serializer.u64),

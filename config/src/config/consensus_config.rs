@@ -8,8 +8,10 @@ use std::path::PathBuf;
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct ConsensusConfig {
-    pub max_block_txns: u64,
-    pub max_block_bytes: u64,
+    pub max_sending_block_txns: u64,
+    pub max_sending_block_bytes: u64,
+    pub max_receiving_block_txns: u64,
+    pub max_receiving_block_bytes: u64,
     pub max_pruned_blocks_in_mem: usize,
     // Timeout for consensus to get an ack from mempool for executed transactions (in milliseconds)
     pub mempool_executed_txn_timeout_ms: u64,
@@ -30,15 +32,30 @@ pub struct ConsensusConfig {
     // the period = (poll_count - 1) * 30ms
     pub quorum_store_poll_count: u64,
     pub intra_consensus_channel_buffer_size: usize,
+
+    // Used to decide if backoff is needed.
+    // must match one of the CHAIN_HEALTH_WINDOW_SIZES values.
+    pub window_for_chain_health: usize,
+    pub chain_health_backoff: Vec<ChainHealthBackoffValues>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
+pub struct ChainHealthBackoffValues {
+    pub backoff_if_below_participating_voting_power_percentage: usize,
+
+    pub max_sending_block_txns_override: u64,
+    pub max_sending_block_bytes_override: u64,
 }
 
 impl Default for ConsensusConfig {
     fn default() -> ConsensusConfig {
         ConsensusConfig {
-            max_block_txns: 2500,
+            max_sending_block_txns: 2500,
             // defaulting to under 0.5s to broadcast the proposal to 100 validators
             // over 1gbps link
-            max_block_bytes: 600 * 1024, // 600 KB
+            max_sending_block_bytes: 600 * 1024, // 600 KB
+            max_receiving_block_txns: 10000,
+            max_receiving_block_bytes: 3 * 1024 * 1024, // 3MB
             max_pruned_blocks_in_mem: 100,
             mempool_executed_txn_timeout_ms: 1000,
             mempool_txn_pull_timeout_ms: 1000,
@@ -55,6 +72,37 @@ impl Default for ConsensusConfig {
             quorum_store_pull_timeout_ms: 1000,
             quorum_store_poll_count: 10,
             intra_consensus_channel_buffer_size: 10,
+
+            window_for_chain_health: 100,
+            chain_health_backoff: vec![
+                ChainHealthBackoffValues {
+                    backoff_if_below_participating_voting_power_percentage: 80,
+                    max_sending_block_txns_override: 2000,
+                    max_sending_block_bytes_override: 500 * 1024,
+                },
+                ChainHealthBackoffValues {
+                    backoff_if_below_participating_voting_power_percentage: 77,
+                    max_sending_block_txns_override: 1000,
+                    max_sending_block_bytes_override: 250 * 1024,
+                },
+                ChainHealthBackoffValues {
+                    backoff_if_below_participating_voting_power_percentage: 75,
+                    max_sending_block_txns_override: 400,
+                    max_sending_block_bytes_override: 100 * 1024,
+                },
+                ChainHealthBackoffValues {
+                    backoff_if_below_participating_voting_power_percentage: 72,
+                    max_sending_block_txns_override: 200,
+                    max_sending_block_bytes_override: 50 * 1024,
+                },
+                ChainHealthBackoffValues {
+                    backoff_if_below_participating_voting_power_percentage: 69,
+                    // in practice, latencies make it such that 2-4 blocks/s is max,
+                    // meaning that most aggressively we limit to ~200-400 TPS
+                    max_sending_block_txns_override: 100,
+                    max_sending_block_bytes_override: 25 * 1024,
+                },
+            ],
         }
     }
 }

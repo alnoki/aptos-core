@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::state_store::state_key::{StateKey, StateKeyTag};
-use move_deps::move_core_types::account_address::AccountAddress;
+use move_core_types::account_address::AccountAddress;
 
 // Struct for defining prefix of a state key, which can be used for finding all the values with a
 // particular key prefix
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct StateKeyPrefix {
     tag: StateKeyTag,
     bytes: Vec<u8>,
@@ -51,7 +51,7 @@ mod tests {
             state_key_prefix::StateKeyPrefix,
         },
     };
-    use move_deps::move_core_types::account_address::AccountAddress;
+    use move_core_types::account_address::AccountAddress;
 
     #[test]
     fn test_state_key_prefix() {

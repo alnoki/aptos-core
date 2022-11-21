@@ -91,6 +91,15 @@ pub static TOTAL_VOTING_POWER: Lazy<Gauge> = Lazy::new(|| {
     .unwrap()
 });
 
+/// Voting power of the validator
+pub static VALIDATOR_VOTING_POWER: Lazy<Gauge> = Lazy::new(|| {
+    register_gauge!(
+        "aptos_validator_voting_power",
+        "Voting power of the validator"
+    )
+    .unwrap()
+});
+
 /// Number of rounds we were collecting votes for proposer
 /// (similar to PROPOSALS_COUNT, but can be larger, if we failed in creating/sending of the proposal)
 pub static PROPOSER_COLLECTED_ROUND_COUNT: Lazy<IntCounter> = Lazy::new(|| {
@@ -167,7 +176,29 @@ pub static LEADER_REPUTATION_ROUND_HISTORY_SIZE: Lazy<IntGauge> = Lazy::new(|| {
     .unwrap()
 });
 
-/// Computed at leader election time, with some delay.
+/// Number of rounds we were collecting votes for proposer
+/// (similar to PROPOSALS_COUNT, but can be larger, if we failed in creating/sending of the proposal)
+pub static CHAIN_HEALTH_BACKOFF_TRIGGERED: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "aptos_chain_health_backoff_triggered",
+        "Total voting power of all votes collected for the round this node was proposer",
+    )
+    .unwrap()
+});
+
+/// Next set of counters are computed at leader election time, with some delay.
+
+/// Current voting power fraction that participated in consensus
+/// (voted or proposed) in the reputation window, used for chain-health
+/// based backoff
+pub static CHAIN_HEALTH_REPUTATION_PARTICIPATING_VOTING_POWER_FRACTION: Lazy<Gauge> =
+    Lazy::new(|| {
+        register_gauge!(
+            "aptos_chain_health_participating_voting_power_fraction_last_reputation_rounds",
+            "Total voting power of validators in validator set"
+        )
+        .unwrap()
+    });
 
 /// Window sizes for which to measure chain health.
 pub static CHAIN_HEALTH_WINDOW_SIZES: [usize; 4] = [10, 30, 100, 300];
@@ -201,7 +232,7 @@ pub static CHAIN_HEALTH_PARTICIPATING_VOTING_POWER: Lazy<Vec<Gauge>> = Lazy::new
                     "aptos_chain_health_participating_voting_power_last_{}_rounds",
                     i
                 ),
-                "Total voting power of validators in validator set"
+                "Current (with some delay) voting power that participated in consensus (voted or proposed) in the given window."
             )
             .unwrap()
         })
@@ -219,7 +250,7 @@ pub static CHAIN_HEALTH_PARTICIPATING_NUM_VALIDATORS: Lazy<Vec<IntGauge>> = Lazy
                     "aptos_chain_health_participating_num_validators_last_{}_rounds",
                     i
                 ),
-                "Total voting power of validators in validator set"
+                "Current (with some delay) number of validators that participated in consensus (voted or proposed) in the given window."
             )
             .unwrap()
         })
@@ -485,6 +516,15 @@ pub static BUFFER_MANAGER_RETRY_COUNT: Lazy<IntCounter> = Lazy::new(|| {
     register_int_counter!(
         "aptos_consensus_buffer_manager_retry_count",
         "Count of the buffer manager retry requests since last restart"
+    )
+    .unwrap()
+});
+
+/// Time it takes for proposer election to compute proposer (when not cached)
+pub static PROPOSER_ELECTION_DURATION: Lazy<Histogram> = Lazy::new(|| {
+    register_histogram!(
+        "aptos_consensus_proposer_election_duration",
+        "Time it takes for proposer election to compute proposer (when not cached)"
     )
     .unwrap()
 });

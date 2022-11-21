@@ -1,45 +1,41 @@
 from __future__ import annotations
 
-import multiprocessing
-
-
-# Using fork can crash the subprocess try use spawn instead
-try:
-    multiprocessing.set_start_method("spawn")
-except RuntimeError:
-    pass
-
-
 import asyncio
-import atexit
+import difflib
 import json
 import os
-from pprint import pprint
-import pwd
 import random
 import re
 import resource
-import subprocess
 import sys
-import tempfile
 import textwrap
 import time
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from typing import (
     Any,
     Callable,
-    ForwardRef,
+    Iterator,
+    Mapping,
     Generator,
     List,
     Optional,
     Sequence,
+    Set,
     Tuple,
     TypedDict,
     Union,
 )
+from urllib.parse import ParseResult, urlunparse, urlencode
+from forge_wrapper_core.filesystem import Filesystem, LocalFilesystem
+from forge_wrapper_core.git import Git
+from forge_wrapper_core.process import Processes, SystemProcesses
+
+from forge_wrapper_core.shell import LocalShell, Shell
+from forge_wrapper_core.time import SystemTime, Time
 
 
 @dataclass
@@ -56,77 +52,17 @@ class RunResult:
         return self.exit_code == 0
 
 
-class Shell:
-    def run(self, command: Sequence[str], stream_output: bool = False) -> RunResult:
-        raise NotImplementedError()
-
-    async def gen_run(
-        self, command: Sequence[str], stream_output: bool = False
-    ) -> RunResult:
-        raise NotImplementedError()
-
-
-@dataclass
-class LocalShell(Shell):
-    verbose: bool = False
-
-    def run(self, command: Sequence[str], stream_output: bool = False) -> RunResult:
-        # Write to a temp file, stream to stdout
-        tmpname = tempfile.mkstemp()[1]
-        with open(tmpname, "wb") as writer, open(tmpname, "rb") as reader:
-            if self.verbose:
-                print(f"+ {' '.join(command)}")
-            process = subprocess.Popen(command, stdout=writer, stderr=writer)
-            output = b""
-            while process.poll() is None:
-                chunk = reader.read()
-                output += chunk
-                if stream_output:
-                    sys.stdout.write(chunk.decode("utf-8"))
-                time.sleep(0.1)
-            output += reader.read()
-        return RunResult(process.returncode, output)
-
-    async def gen_run(
-        self, command: Sequence[str], stream_output: bool = False
-    ) -> RunResult:
-        # Write to a temp file, stream to stdout
-        tmpname = tempfile.mkstemp()[1]
-        with open(tmpname, "wb") as writer, open(tmpname, "rb") as reader:
-            if self.verbose:
-                print(f"+ {' '.join(command)}")
-            try:
-                process = await asyncio.create_subprocess_exec(
-                    command[0], *command[1:], stdout=writer, stderr=writer
-                )
-            except Exception as e:
-                raise Exception(f"Failed running {command}") from e
-            output = b""
-            while True:
-                wait_task = asyncio.create_task(process.wait())
-                finished, running = await asyncio.wait({wait_task}, timeout=1)
-                assert bool(finished) ^ bool(
-                    running
-                ), "Cannot have both finished and running"
-                if finished:
-                    break
-                chunk = reader.read()
-                output += chunk
-                if stream_output:
-                    sys.stdout.write(chunk.decode("utf-8"))
-                await asyncio.sleep(0.1)
-            output += reader.read()
-        exit_code = process.returncode
-        assert exit_code is not None, "Process must have exited"
-        return RunResult(exit_code, output)
+def get_prompt_answer(prompt: str, answer: Optional[str] = None) -> bool:
+    """Get a yes/no answer from the user, or use the default answer if provided."""
+    if not answer and not os.getenv("CI"):
+        answer = input(f"{prompt} (y/n) ").strip().lower()
+    return answer in ("y", "yes", "yeet", "yessir", "si", "true")
 
 
 def install_dependency(dependency: str) -> None:
     print(f"{dependency} is not currently installed")
     answer = os.getenv("FORGE_INSTALL_DEPENDENCIES") or os.getenv("CI")
-    if not answer:
-        answer = input("Would you like to install it now? (y/n) ").strip().lower()
-    if answer in ("y", "yes", "yeet", "yessir", "si", "true"):
+    if get_prompt_answer("Would you like to install it now?", answer):
         shell = LocalShell(True)
         shell.run(["pip3", "install", dependency], stream_output=True).unwrap()
     else:
@@ -147,10 +83,6 @@ except ImportError:
     import psutil
 
 
-def get_current_user() -> str:
-    return pwd.getpwuid(os.getuid())[0]
-
-
 @click.group()
 def main() -> None:
     # Check that the current directory is the root of the repository.
@@ -167,144 +99,14 @@ def envoption(name: str, default: Optional[Any] = None) -> Any:
     )
 
 
-class Filesystem:
-    def write(self, filename: str, contents: bytes) -> None:
-        raise NotImplementedError()
-
-    def read(self, filename: str) -> bytes:
-        raise NotImplementedError()
-
-    def mkstemp(self) -> str:
-        raise NotImplementedError()
-
-    def rlimit(self, resource_type: int, soft: int, hard: int) -> None:
-        raise NotImplementedError()
-
-    def unlink(self, filename: str) -> None:
-        raise NotImplementedError()
-
-
-class LocalFilesystem(Filesystem):
-    def write(self, filename: str, contents: bytes) -> None:
-        with open(filename, "wb") as f:
-            f.write(contents)
-
-    def read(self, filename: str) -> bytes:
-        with open(filename, "rb") as f:
-            return f.read()
-
-    def mkstemp(self) -> str:
-        return tempfile.mkstemp()[1]
-
-    def rlimit(self, resource_type: int, soft: int, hard: int) -> None:
-        resource.setrlimit(resource_type, (soft, hard))
-
-    def unlink(self, filename: str) -> None:
-        os.unlink(filename)
-
-
 # o11y resources
 GRAFANA_BASE_URL = (
     "https://o11y.aptosdev.com/grafana/d/overview/overview?orgId=1&refresh=10s&"
     "var-Datasource=VictoriaMetrics%20Global"
 )
-HUMIO_LOGS_LINK = (
-    "https://cloud.us.humio.com/k8s/search?query=%24forgeLogs%28validator_insta"
-    "nce%3D%2A%29%20%7C%20$FILTER&widgetType=list-view&columns=%5B%7B%22type%22%3A%22field%2"
-    "2%2C%22fieldName%22%3A%22%40timestamp%22%2C%22format%22%3A%22timestamp%22%"
-    "2C%22width%22%3A180%7D%2C%7B%22type%22%3A%22field%22%2C%22fieldName%22%3A%"
-    "22level%22%2C%22format%22%3A%22text%22%2C%22width%22%3A54%7D%2C%7B%22type%"
-    "22%3A%22link%22%2C%22openInNewBrowserTab%22%3A***%2C%22style%22%3A%22butto"
-    "n%22%2C%22hrefTemplate%22%3A%22https%3A%2F%2Fgithub.com%2Faptos-labs%2Fapt"
-    "os-core%2Fpull%2F%7B%7Bfields%5B%5C%22github_pr%5C%22%5D%7D%7D%22%2C%22tex"
-    "tTemplate%22%3A%22%7B%7Bfields%5B%5C%22github_pr%5C%22%5D%7D%7D%22%2C%22he"
-    "ader%22%3A%22Forge%20PR%22%2C%22width%22%3A79%7D%2C%7B%22type%22%3A%22fiel"
-    "d%22%2C%22fieldName%22%3A%22k8s.namespace%22%2C%22format%22%3A%22text%22%2"
-    "C%22width%22%3A104%7D%2C%7B%22type%22%3A%22field%22%2C%22fieldName%22%3A%2"
-    "2k8s.pod_name%22%2C%22format%22%3A%22text%22%2C%22width%22%3A126%7D%2C%7B%"
-    "22type%22%3A%22field%22%2C%22fieldName%22%3A%22k8s.container_name%22%2C%22"
-    "format%22%3A%22text%22%2C%22width%22%3A85%7D%2C%7B%22type%22%3A%22field%22"
-    "%2C%22fieldName%22%3A%22message%22%2C%22format%22%3A%22text%22%7D%5D&newes"
-    "tAtBottom=***&showOnlyFirstLine=false"
-)
 
-class Process:
-    def name(self) -> str:
-        raise NotImplementedError()
-
-    def kill(self) -> None:
-        raise NotImplementedError()
-
-    def ppid(self) -> int:
-        raise NotImplementedError()
-
-
-class Processes:
-    def processes(self) -> Generator[Process, None, None]:
-        raise NotImplementedError()
-
-    def get_pid(self) -> int:
-        raise NotImplementedError()
-
-    def spawn(self, target: Callable[[], None]) -> Process:
-        raise NotImplementedError()
-
-    def atexit(self, callback: Callable[[], None]) -> None:
-        raise NotImplementedError()
-
-    def user(self) -> str:
-        raise NotImplementedError()
-
-
-@dataclass
-class SystemProcess(Process):
-    process: psutil.Process
-
-    def name(self) -> str:
-        return self.process.name()
-
-    def kill(self) -> None:
-        self.process.kill()
-
-    def ppid(self) -> int:
-        return self.process.ppid()
-
-
-@dataclass
-class MultiProcessingProcess(Process):
-    process: multiprocessing.Process
-
-    def name(self) -> str:
-        return self.process.name
-
-    def ppid(self) -> int:
-        # Since we spawn this process for all intents and purposes we are its
-        # parent process
-        return os.getpid()
-
-    def kill(self) -> None:
-        self.process.terminate()
-        self.process.join()
-
-
-class SystemProcesses(Processes):
-    def processes(self) -> Generator[Process, None, None]:
-        for process in psutil.process_iter():
-            yield SystemProcess(process)
-
-    def get_pid(self) -> int:
-        return os.getpid()
-
-    def spawn(self, target: Callable[[], None]) -> Process:
-        process = multiprocessing.Process(daemon=True, target=target)
-        process.start()
-        return MultiProcessingProcess(process)
-
-    def atexit(self, callback: Callable[[], None]) -> None:
-        atexit.register(callback)
-
-    def user(self) -> str:
-        return get_current_user()
+# helm chart default override values
+HELM_CHARTS = ["aptos-node", "aptos-genesis"]
 
 
 class ForgeState(Enum):
@@ -355,13 +157,22 @@ class ForgeResult:
         try:
             yield result
             result.set_debugging_output(
-                dump_forge_state(context.shell, context.forge_namespace)
+                dump_forge_state(
+                    context.shell,
+                    context.forge_namespace,
+                    context.forge_cluster.kubeconf,
+                )
             )
         except Exception as e:
             result.set_state(ForgeState.FAIL)
             result.set_debugging_output(
                 "{}\n{}\n".format(
-                    str(e), dump_forge_state(context.shell, context.forge_namespace)
+                    str(e),
+                    dump_forge_state(
+                        context.shell,
+                        context.forge_namespace,
+                        context.forge_cluster.kubeconf,
+                    ),
                 )
             )
         result._end_time = context.time.now()
@@ -383,27 +194,16 @@ class ForgeResult:
         output_lines = []
         if not self.succeeded():
             output_lines.append(self.debugging_output)
-        output_lines.extend([
-            f"Forge output: {self.output}",
-            f"Forge {self.state.value.lower()}ed",
-        ])
+        output_lines.extend(
+            [
+                f"Forge output: {self.output}",
+                f"Forge {self.state.value.lower()}ed",
+            ]
+        )
         return "\n".join(output_lines)
 
     def succeeded(self) -> bool:
         return self.state == ForgeState.PASS
-
-
-class Time:
-    def epoch(self) -> str:
-        return self.now().strftime("%s")
-
-    def now(self) -> datetime:
-        raise NotImplementedError()
-
-
-class SystemTime(Time):
-    def now(self) -> datetime:
-        return datetime.now(timezone.utc)
 
 
 @dataclass
@@ -411,6 +211,7 @@ class SystemContext:
     shell: Shell
     filesystem: Filesystem
     processes: Processes
+    time: Time
 
 
 @dataclass
@@ -422,7 +223,6 @@ class ForgeContext:
 
     # forge cluster options
     forge_namespace: str
-    keep_port_forwards: bool
     forge_args: Sequence[str]
 
     # aws related options
@@ -432,18 +232,14 @@ class ForgeContext:
     forge_image_tag: str
     image_tag: str
     upgrade_image_tag: str
-    forge_cluster_name: str
+    forge_cluster: ForgeCluster
     forge_test_suite: str
     forge_blocking: bool
 
     github_actions: str
     github_job_url: Optional[str]
 
-    def report(
-        self,
-        result: ForgeResult,
-        outputs: List[ForgeFormatter]
-    ) -> None:
+    def report(self, result: ForgeResult, outputs: List[ForgeFormatter]) -> None:
         for formatter in outputs:
             output = formatter.format(self, result)
             print(f"=== Start {formatter} ===")
@@ -453,7 +249,7 @@ class ForgeContext:
 
     @property
     def forge_chain_name(self) -> str:
-        forge_chain_name = self.forge_cluster_name.lstrip("aptos-")
+        forge_chain_name = self.forge_cluster.name.lstrip("aptos-")
         if "forge" not in forge_chain_name:
             forge_chain_name += "net"
         return forge_chain_name
@@ -487,10 +283,8 @@ def format_report(context: ForgeContext, result: ForgeResult) -> str:
             error_buffer.append(line)
     report_output = "\n".join(report_lines)
     error_output = "\n".join(error_buffer)
-    debugging_appendix = (
-        "Trailing Log Lines:\n{}\nDebugging output:\n{}".format(
-            error_output, result.debugging_output
-        )
+    debugging_appendix = "Trailing Log Lines:\n{}\nDebugging output:\n{}".format(
+        error_output, result.debugging_output
     )
     if not report_lines:
         return "Forge test runner terminated:\n{}".format(debugging_appendix)
@@ -510,6 +304,7 @@ def format_report(context: ForgeContext, result: ForgeResult) -> str:
             return "{}\n{}".format(report_text, debugging_appendix)
         return report_text
 
+
 def get_dashboard_link(
     forge_namespace: str,
     forge_chain_name: str,
@@ -525,8 +320,99 @@ def get_dashboard_link(
         raise Exception(f"Invalid refresh argument: {time_filter}")
 
     return (
-        f"{GRAFANA_BASE_URL}&var-namespace={forge_namespace}"
+        f"{GRAFANA_BASE_URL}&var-namespace={forge_namespace}&var-metrics_source=All"
         f"&var-chain_name={forge_chain_name}{grafana_time_filter}"
+    )
+
+
+def shorten_link(link: str) -> str:
+    headers = {
+        "x-api-key": os.getenv("SHORTENER_API_KEY"),
+        "Content-Type": "application/json",
+    }
+    body = json.dumps(
+        {
+            "longUrl": link,
+        }
+    )
+    try:
+        import requests
+
+        response = requests.post(
+            "https://api.aws3.link/shorten", headers=headers, data=body
+        )
+        return f"https://{response.json()['shortUrl']}"
+    # Dont fail if we fail to shorten
+    except Exception:
+        return link
+
+
+def milliseconds(timestamp: datetime) -> int:
+    return int(timestamp.timestamp()) * 1000
+
+
+def apply_humio_time_filter(
+    urlparts: Mapping[str, Union[str, bool, int]],
+    time_filter: Union[bool, Tuple[datetime, datetime]],
+) -> Mapping:
+    if time_filter is True:
+        urlparts = {
+            **urlparts,
+            "live": "true",
+            "start": "30m",
+        }
+    elif isinstance(time_filter, tuple):
+        start_ms = milliseconds(time_filter[0])
+        end_ms = milliseconds(time_filter[1])
+        urlparts = {
+            **urlparts,
+            "live": "false",
+            "start": start_ms,
+            "end": end_ms,
+        }
+    else:
+        raise Exception(f"Invalid refresh argument: {time_filter}")
+    return urlparts
+
+
+def get_humio_forge_link(
+    forge_namespace: str,
+    time_filter: Union[bool, Tuple[datetime, datetime]],
+) -> str:
+    columns = [
+        {
+            "type": "field",
+            "fieldName": "@timestamp",
+            "format": "timestamp",
+            "width": 180,
+        },
+        {
+            "type": "link",
+            "openInNewBrowserTab": "***",
+            "style": "button",
+            "hrefTemplate": 'https://github.com/aptos-labs/aptos-core/pull/{{fields["github_pr"]}}',
+            "textTemplate": '{{fields["github_pr"]}}',
+            "header": "Forge PR",
+            "width": 79,
+        },
+        {"type": "field", "fieldName": "k8s.namespace", "format": "text", "width": 104},
+        {"type": "field", "fieldName": "message", "format": "text", "width": 3760},
+    ]
+    urlparts = {
+        "query": (
+            "$forgeLogs(validator_instance=*)"
+            f" | {forge_namespace}"
+            ' | "k8s.labels.app.kubernetes.io/name" = forge'
+        ),
+        "widgetType": "list-view",
+        "columns": json.dumps(columns),
+        "newestAtBottom": "true",
+        "showOnlyFirstLine": "false",
+    }
+    urlparts = apply_humio_time_filter(urlparts, time_filter)
+    query = urlencode(urlparts)
+    return urlunparse(
+        ParseResult("https", "cloud.us.humio.com", "/k8s/search", "", query, "")
     )
 
 
@@ -534,18 +420,46 @@ def get_humio_logs_link(
     forge_namespace: str,
     time_filter: Union[bool, Tuple[datetime, datetime]],
 ) -> str:
-    filters = f"{forge_namespace}%20"
-    if time_filter is True:
-        filters += "&live=true&start=30m"
-    elif isinstance(time_filter, tuple):
-        start_ms = int(time_filter[0].timestamp()) * 1000
-        end_ms = int(time_filter[1].timestamp()) * 1000
-        filters += f"&live=false&start={start_ms}&end={end_ms}"
-    else:
-        raise Exception(f"Invalid refresh argument: {time_filter}")
-    return (
-        HUMIO_LOGS_LINK
-        .replace("$FILTER", filters)
+    query = f"$forgeLogs(validator_instance=*) | {forge_namespace}"
+    columns = [
+        {
+            "type": "field",
+            "fieldName": "@timestamp",
+            "format": "timestamp",
+            "width": 180,
+        },
+        {"type": "field", "fieldName": "level", "format": "text", "width": 54},
+        {
+            "type": "link",
+            "openInNewBrowserTab": "***",
+            "style": "button",
+            "hrefTemplate": 'https://github.com/aptos-labs/aptos-core/pull/{{fields["github_pr"]}}',
+            "textTemplate": '{{fields["github_pr"]}}',
+            "header": "Forge PR",
+            "width": 79,
+        },
+        {"type": "field", "fieldName": "k8s.namespace", "format": "text", "width": 104},
+        {"type": "field", "fieldName": "k8s.pod_name", "format": "text", "width": 126},
+        {
+            "type": "field",
+            "fieldName": "k8s.container_name",
+            "format": "text",
+            "width": 85,
+        },
+        {"type": "field", "fieldName": "message", "format": "text"},
+    ]
+    urlparts = {
+        "query": query,
+        "widgetType": "list-view",
+        "columns": json.dumps(columns),
+        "newestAtBottom": "***",
+        "showOnlyFirstLine": "false",
+    }
+    urlparts = apply_humio_time_filter(urlparts, time_filter)
+    return urlunparse(
+        ParseResult(
+            "https", "cloud.us.humio.com", "/k8s/search", "", urlencode(urlparts), ""
+        )
     )
 
 
@@ -608,17 +522,11 @@ def format_comment(context: ForgeContext, result: ForgeResult) -> str:
     )
 
     if result.state == ForgeState.PASS:
-        forge_comment_header = (
-            f"### :white_check_mark: Forge suite `{context.forge_test_suite}` success on {get_testsuite_images(context)}"
-        )
+        forge_comment_header = f"### :white_check_mark: Forge suite `{context.forge_test_suite}` success on {get_testsuite_images(context)}"
     elif result.state == ForgeState.FAIL:
-        forge_comment_header = (
-            f"### :x: Forge suite `{context.forge_test_suite}` failure on {get_testsuite_images(context)}"
-        )
+        forge_comment_header = f"### :x: Forge suite `{context.forge_test_suite}` failure on {get_testsuite_images(context)}"
     elif result.state == ForgeState.SKIP:
-        forge_comment_header = (
-            f"### :thought_balloon: Forge suite `{context.forge_test_suite}` preempted on {get_testsuite_images(context)}"
-        )
+        forge_comment_header = f"### :thought_balloon: Forge suite `{context.forge_test_suite}` preempted on {get_testsuite_images(context)}"
     else:
         raise Exception(f"Invalid forge state: {result.state}")
 
@@ -646,12 +554,18 @@ class ForgeRunner:
         raise NotImplementedError
 
 
-def dump_forge_state(shell: Shell, forge_namespace: str) -> str:
+def dump_forge_state(
+    shell: Shell,
+    forge_namespace: str,
+    kubeconf: str,
+) -> str:
     try:
         output = (
             shell.run(
                 [
                     "kubectl",
+                    "--kubeconfig",
+                    kubeconf,
                     "get",
                     "pods",
                     "-n",
@@ -666,10 +580,16 @@ def dump_forge_state(shell: Shell, forge_namespace: str) -> str:
         return f"Failed to get debugging output: {e}"
 
 
-def find_the_killer(shell: Shell, forge_namespace) -> str:
+def find_the_killer(
+    shell: Shell,
+    forge_namespace: str,
+    kubeconf: str,
+) -> str:
     killer = shell.run(
         [
             "kubectl",
+            "--kubeconfig",
+            kubeconf,
             "get",
             "pod",
             "-l",
@@ -698,17 +618,6 @@ class LocalForgeRunner(ForgeRunner):
                 ForgeState.PASS if result.succeeded() else ForgeState.FAIL
             )
 
-        # Kill port forward unless we're keeping them
-        if not context.keep_port_forwards:
-            # Kill all processess with kubectl in the name
-            for process in context.processes.processes():
-                if (
-                    "kubectl" in process.name()
-                    and process.ppid() == context.processes.get_pid()
-                ):
-                    print("Killing", process)
-                    process.kill()
-
         return forge_result
 
 
@@ -720,6 +629,8 @@ class K8sForgeRunner(ForgeRunner):
         context.shell.run(
             [
                 "kubectl",
+                "--kubeconfig",
+                context.forge_cluster.kubeconf,
                 "delete",
                 "pod",
                 "-n",
@@ -732,6 +643,8 @@ class K8sForgeRunner(ForgeRunner):
         context.shell.run(
             [
                 "kubectl",
+                "--kubeconfig",
+                context.forge_cluster.kubeconf,
                 "wait",
                 "-n",
                 "default",
@@ -762,11 +675,22 @@ class K8sForgeRunner(ForgeRunner):
             specfile = context.filesystem.mkstemp()
             context.filesystem.write(specfile, rendered.encode())
             context.shell.run(
-                ["kubectl", "apply", "-n", "default", "-f", specfile]
+                [
+                    "kubectl",
+                    "--kubeconfig",
+                    context.forge_cluster.kubeconf,
+                    "apply",
+                    "-n",
+                    "default",
+                    "-f",
+                    specfile,
+                ]
             ).unwrap()
             context.shell.run(
                 [
                     "kubectl",
+                    "--kubeconfig",
+                    context.forge_cluster.kubeconf,
                     "wait",
                     "-n",
                     "default",
@@ -780,7 +704,16 @@ class K8sForgeRunner(ForgeRunner):
             streaming = True
             while state is None:
                 forge_logs = context.shell.run(
-                    ["kubectl", "logs", "-n", "default", "-f", forge_pod_name],
+                    [
+                        "kubectl",
+                        "--kubeconfig",
+                        context.forge_cluster.kubeconf,
+                        "logs",
+                        "-n",
+                        "default",
+                        "-f",
+                        forge_pod_name,
+                    ],
                     stream_output=streaming,
                 )
 
@@ -795,6 +728,8 @@ class K8sForgeRunner(ForgeRunner):
                     context.shell.run(
                         [
                             "kubectl",
+                            "--kubeconfig",
+                            context.forge_cluster.kubeconf,
                             "get",
                             "pod",
                             "-n",
@@ -815,7 +750,11 @@ class K8sForgeRunner(ForgeRunner):
                 elif re.findall(r"not\s*found", forge_status, re.IGNORECASE):
                     state = ForgeState.SKIP
                     forge_result.set_debugging_output(
-                        find_the_killer(context.shell, context.forge_namespace)
+                        find_the_killer(
+                            context.shell,
+                            context.forge_namespace,
+                            context.forge_cluster.kubeconf,
+                        )
                     )
                 else:
                     state = ForgeState.FAIL
@@ -861,12 +800,6 @@ def list_eks_clusters(shell: Shell) -> List[str]:
         raise AwsError("Failed to list eks clusters") from e
 
 
-def set_current_cluster(shell: Shell, forge_cluster_name: str) -> None:
-    shell.run(
-        ["aws", "eks", "update-kubeconfig", "--name", forge_cluster_name]
-    ).unwrap()
-
-
 async def write_cluster_config(
     shell: Shell, forge_cluster_name: str, temp: str
 ) -> None:
@@ -894,28 +827,18 @@ def get_current_cluster_name(shell: Shell) -> str:
     return matches[0]
 
 
-@dataclass
-class Git:
-    shell: Shell
-
-    def run(self, command) -> RunResult:
-        return self.shell.run(["git", *command])
-
-    def last(self, limit: int = 1) -> Generator[str, None, None]:
-        for i in range(limit):
-            yield self.run(["rev-parse", f"HEAD~{i}"]).unwrap().decode().strip()
-
-
 def assert_provided_image_tags_has_profile_or_features(
     image_tag: Optional[str],
     upgrade_image_tag: Optional[str],
-    enable_failpoints_feature: bool,
+    enable_failpoints: bool,
     enable_performance_profile: bool,
 ):
     for tag in [image_tag, upgrade_image_tag]:
         if not tag:
             continue
-        if enable_failpoints_feature:
+        if (
+            enable_failpoints
+        ):  # testing image requires the tag to be prefixed with failpoints_
             assert tag.startswith(
                 "failpoints"
             ), f"Missing failpoints_ feature prefix in {tag}"
@@ -929,17 +852,19 @@ def find_recent_images_by_profile_or_features(
     shell: Shell,
     git: Git,
     num_images: int,
-    enable_failpoints_feature: Optional[bool],
+    enable_failpoints: Optional[bool],
     enable_performance_profile: Optional[bool],
 ) -> Generator[str, None, None]:
     image_name = "aptos/validator"
     image_tag_prefix = ""
-    if enable_failpoints_feature and enable_performance_profile:
-        raise Exception("Cannot yet set both failpoints and performance")
+    if enable_failpoints and enable_performance_profile:
+        raise Exception(
+            "Cannot yet set both testing (failpoints) image and performance"
+        )
 
     if enable_performance_profile:
         image_tag_prefix = "performance_"
-    if enable_failpoints_feature:
+    if enable_failpoints:
         image_tag_prefix = "failpoints_"
 
     return find_recent_images(
@@ -994,7 +919,9 @@ def image_exists(shell: Shell, image_name: str, image_tag: str) -> bool:
 
 
 def sanitize_forge_resource_name(forge_resource: str) -> str:
-    """Sanitize the intended forge resource name to be a valid k8s resource name"""
+    """
+    Sanitize the intended forge resource name to be a valid k8s resource name
+    """
     max_length = 64
     sanitized_namespace = ""
     for i, c in enumerate(forge_resource):
@@ -1004,6 +931,8 @@ def sanitize_forge_resource_name(forge_resource: str) -> str:
             sanitized_namespace += c
         else:
             sanitized_namespace += "-"
+    if not forge_resource.startswith("forge-"):
+        raise Exception("Forge resource name must start with 'forge-'")
     return sanitized_namespace
 
 
@@ -1035,43 +964,49 @@ def create_forge_command(
         ]
         if cargo_args:
             forge_args.extend(cargo_args)
-        forge_args.extend([
-            "-p",
-            "forge-cli",
-            "--",
-        ])
+        forge_args.extend(
+            [
+                "-p",
+                "forge-cli",
+                "--",
+            ]
+        )
     elif forge_runner_mode == "k8s":
         forge_args = ["forge"]
     else:
         return []
     if forge_test_suite:
-        forge_args.extend([
-            "--suite", forge_test_suite
-        ])
+        forge_args.extend(["--suite", forge_test_suite])
     if forge_runner_duration_secs:
-        forge_args.extend([
-            "--duration-secs", forge_runner_duration_secs
-        ])
+        forge_args.extend(["--duration-secs", forge_runner_duration_secs])
 
     if forge_num_validators:
         forge_args.extend(["--num-validators", forge_num_validators])
     if forge_num_validator_fullnodes:
-        forge_args.extend([
-            "--num-validator-fullnodes",
-            forge_num_validator_fullnodes,
-        ])
+        forge_args.extend(
+            [
+                "--num-validator-fullnodes",
+                forge_num_validator_fullnodes,
+            ]
+        )
 
     if forge_cli_args:
         forge_args.extend(forge_cli_args)
 
     # TODO: add support for other backend
     backend = "k8s-swarm"
-    forge_args.extend([
-        "test", backend,
-        "--image-tag", image_tag,
-        "--upgrade-image-tag", upgrade_image_tag,
-        "--namespace", forge_namespace,
-    ])
+    forge_args.extend(
+        [
+            "test",
+            backend,
+            "--image-tag",
+            image_tag,
+            "--upgrade-image-tag",
+            upgrade_image_tag,
+            "--namespace",
+            forge_namespace,
+        ]
+    )
 
     if forge_runner_mode == "local":
         forge_args.append("--port-forward")
@@ -1089,12 +1024,93 @@ def create_forge_command(
     return forge_args
 
 
+async def run_multiple(
+    context: SystemContext,
+    forge_test_suites: List[str],
+    disabled_suites: Set[str],
+    forge_namespace: str,
+    forge_pre_comment: Optional[str],
+    forge_comment: Optional[str],
+    forge_runner_mode: Optional[str],
+    github_step_summary: Optional[str],
+) -> None:
+    # Remove formatting environment variables
+    os.environ["FORGE_OUTPUT"] = ""
+    os.environ["FORGE_REPORT"] = ""
+    os.environ["FORGE_PRE_COMMENT"] = ""
+    os.environ["FORGE_COMMENT"] = ""
+    os.environ["GITHUB_STEP_SUMMARY"] = ""
+
+    pending_results = []
+    pending_suites = []
+    pending_comment = []
+
+    start_time = context.time.now()
+
+    for suite in forge_test_suites:
+        new_namespace = f"{forge_namespace}-{suite}"
+        short_link = shorten_link(get_humio_forge_link(new_namespace, True))
+        pending_comment.append(f"Running {suite}: [Runner logs]({short_link})")
+        if forge_runner_mode != "pre-forge":
+            pending_results.append(
+                context.shell.gen_run(
+                    [
+                        # TODO figure out which other args we should forward
+                        # This might only work from github for starters
+                        sys.executable,
+                        __file__,
+                        "test",
+                        "--forge-test-suite",
+                        suite,
+                        "--forge-namespace",
+                        new_namespace,
+                    ],
+                )
+            )
+            pending_suites.append((suite, new_namespace))
+    print("\n".join(pending_comment))
+    if forge_runner_mode == "pre-forge":
+        if forge_pre_comment:
+            context.filesystem.write(
+                forge_pre_comment,
+                "\n".join(pending_comment).encode(),
+            )
+    else:
+        final_forge_comment = []
+        results = await asyncio.gather(*pending_results)
+        stop_time = context.time.now()
+        assert len(results) == len(pending_suites)
+        failed = False
+        for i, result in enumerate(results):
+            suite, namespace = pending_suites[i]
+            short_link = shorten_link(
+                get_humio_forge_link(namespace, (start_time, stop_time))
+            )
+            if result.succeeded():
+                final_forge_comment.append(f"{suite} succeeded")
+            else:
+                failed = suite not in disabled_suites
+                disabled = " (disabled)" if suite in disabled_suites else ""
+                final_forge_comment.append(f"{suite} failed{disabled}")
+        final_forge_comment.append(f"Run {'failed' if failed else 'succeeded'}")
+        print("\n".join(final_forge_comment))
+        if forge_comment:
+            context.filesystem.write(
+                forge_comment, "\n".join(final_forge_comment).encode()
+            )
+        if github_step_summary:
+            context.filesystem.write(
+                github_step_summary, "\n".join(final_forge_comment).encode()
+            )
+
+
 @main.command()
 # output files
 @envoption("FORGE_OUTPUT")
 @envoption("FORGE_REPORT")
 @envoption("FORGE_PRE_COMMENT")
 @envoption("FORGE_COMMENT")
+@envoption("GITHUB_STEP_SUMMARY")
 # cluster auth
 @envoption("AWS_REGION", "us-west-2")
 # forge test runner customization
@@ -1108,7 +1124,7 @@ def create_forge_command(
 @envoption("FORGE_ENABLE_HAPROXY")
 @envoption("FORGE_ENABLE_FAILPOINTS")
 @envoption("FORGE_ENABLE_PERFORMANCE")
-@envoption("FORGE_TEST_SUITE", "land_blocking")
+@envoption("FORGE_TEST_SUITE")
 @envoption("FORGE_RUNNER_DURATION_SECS", "300")
 @envoption("FORGE_IMAGE_TAG")
 @envoption("IMAGE_TAG")
@@ -1121,10 +1137,18 @@ def create_forge_command(
 @envoption("GITHUB_SERVER_URL")
 @envoption("GITHUB_REPOSITORY")
 @envoption("GITHUB_RUN_ID")
-@envoption("GITHUB_STEP_SUMMARY")
-@click.option("--cargo-args", multiple=True, help="Cargo args to pass to forge local runner")
-@click.option("--forge-cli-args", multiple=True, help="Forge cli args to pass to forge cli")
-@click.option("--test-args", multiple=True, help="Test args to pass to forge test subcommand")
+@click.option(
+    "--cargo-args",
+    multiple=True,
+    help="Cargo args to pass to forge local runner",
+)
+@click.option(
+    "--forge-cli-args", multiple=True, help="Forge cli args to pass to forge cli"
+)
+@click.option(
+    "--test-args", multiple=True, help="Test args to pass to forge test subcommand"
+)
+@click.argument("test_suites", nargs=-1)
 def test(
     forge_output: Optional[str],
     forge_report: Optional[str],
@@ -1157,6 +1181,7 @@ def test(
     cargo_args: Optional[List[str]],
     forge_cli_args: Optional[List[str]],
     test_args: Optional[List[str]],
+    test_suites: Tuple[str],
 ) -> None:
     """Run a forge test"""
     shell = LocalShell(verbose == "true")
@@ -1164,9 +1189,56 @@ def test(
     filesystem = LocalFilesystem()
     processes = SystemProcesses()
     time = SystemTime()
-    context = SystemContext(shell, filesystem, processes)
+    context = SystemContext(shell, filesystem, processes, time)
     config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
     config.init()
+
+    if not forge_namespace:
+        forge_namespace = f"forge-{processes.user()}-{time.epoch()}"
+
+    assert forge_namespace is not None, "Forge namespace is required"
+
+    forge_namespace = sanitize_forge_resource_name(forge_namespace)
+
+    all_suites = list(test_suites)
+    if forge_test_suite:
+        all_suites.append(forge_test_suite)
+    if not all_suites:
+        forge_test_suite = "default"
+
+    # Resolve suites to tests
+    all_resolved_suites = []
+    enabled_resolved_suites = []
+    for suite in all_suites:
+        config_suites = config.get("test_suites")
+        if suite in config_suites:
+            enabled_resolved_suites.extend(config_suites[suite]["enabled_tests"].keys())
+            all_resolved_suites.extend(config_suites[suite]["all_tests"].keys())
+        else:
+            enabled_resolved_suites.append(suite)
+            all_resolved_suites.append(suite)
+
+    disabled_resolved_suites = set(all_resolved_suites) - set(enabled_resolved_suites)
+
+    if len(all_resolved_suites) == 0:
+        print("No tests to run")
+        return
+    elif len(all_resolved_suites) == 1:
+        forge_test_suite = enabled_resolved_suites[0]
+    else:
+        asyncio.run(
+            run_multiple(
+                context,
+                all_resolved_suites,
+                disabled_resolved_suites,
+                forge_namespace,
+                forge_pre_comment,
+                forge_comment,
+                forge_runner_mode,
+                github_step_summary,
+            )
+        )
+        return
 
     aws_account_num = None
     try:
@@ -1175,33 +1247,20 @@ def test(
         print(f"Warning: failed to get AWS account number: {e}")
 
     # Perform cluster selection
-    current_cluster = None
-    try:
-        current_cluster = get_current_cluster_name(shell)
-    except Exception as e:
-        print(f"Warning: failed to get current cluster name: {e}")
-
     if not forge_cluster_name or balance_clusters:
         cluster_names = config.get("enabled_clusters")
         forge_cluster_name = random.choice(cluster_names)
 
     assert forge_cluster_name, "Forge cluster name is required"
 
-    if forge_namespace is None:
-        forge_namespace = f"forge-{processes.user()}-{time.epoch()}"
-
-    forge_namespace = sanitize_forge_resource_name(forge_namespace)
-
-    assert forge_namespace is not None, "Forge namespace is required"
-
     # These features and profile flags are set as strings
-    enable_failpoints_feature = forge_enable_failpoints == "true"
+    enable_failpoints = forge_enable_failpoints == "true"
     enable_performance_profile = forge_enable_performance == "true"
 
     assert_provided_image_tags_has_profile_or_features(
         image_tag,
         upgrade_image_tag,
-        enable_failpoints_feature=enable_failpoints_feature,
+        enable_failpoints=enable_failpoints,
         enable_performance_profile=enable_performance_profile,
     )
 
@@ -1212,11 +1271,12 @@ def test(
                 shell,
                 git,
                 2,
-                enable_failpoints_feature=enable_failpoints_feature,
+                enable_failpoints=enable_failpoints,
                 enable_performance_profile=enable_performance_profile,
             )
         )
-        # This might not work as intended because we dont know if that revision passed forge
+        # This might not work as intended because we dont know if that revision
+        # passed forge
         image_tag = image_tag or second_latest_image
         forge_image_tag = forge_image_tag or default_latest_image
         upgrade_image_tag = upgrade_image_tag or default_latest_image
@@ -1228,7 +1288,7 @@ def test(
                 shell,
                 git,
                 1,
-                enable_failpoints_feature=enable_failpoints_feature,
+                enable_failpoints=enable_failpoints,
                 enable_performance_profile=enable_performance_profile,
             )
         )
@@ -1239,7 +1299,7 @@ def test(
     assert_provided_image_tags_has_profile_or_features(
         image_tag,
         upgrade_image_tag,
-        enable_failpoints_feature=enable_failpoints_feature,
+        enable_failpoints=enable_failpoints,
         enable_performance_profile=enable_performance_profile,
     )
 
@@ -1269,7 +1329,12 @@ def test(
         test_args=test_args,
     )
 
-    context = ForgeContext(
+    print(f"Using cluster: {forge_cluster_name}")
+    temp = context.filesystem.mkstemp()
+    forge_cluster = ForgeCluster(forge_cluster_name, temp)
+    asyncio.run(forge_cluster.write(context.shell))
+
+    forge_context = ForgeContext(
         shell=shell,
         filesystem=filesystem,
         processes=processes,
@@ -1280,12 +1345,13 @@ def test(
         image_tag=image_tag,
         upgrade_image_tag=upgrade_image_tag,
         forge_namespace=forge_namespace,
-        keep_port_forwards=forge_namespace_keep == "true",
-        forge_cluster_name=forge_cluster_name,
+        forge_cluster=forge_cluster,
         forge_test_suite=forge_test_suite,
         forge_blocking=forge_blocking == "true",
         github_actions=github_actions,
-        github_job_url=f"{github_server_url}/{github_repository}/actions/runs/{github_run_id}" if github_run_id else None,
+        github_job_url=f"{github_server_url}/{github_repository}/actions/runs/{github_run_id}"
+        if github_run_id
+        else None,
         forge_args=forge_args,
     )
     forge_runner_mapping = {
@@ -1294,9 +1360,9 @@ def test(
     }
 
     # Maybe this should be its own command?
-    pre_comment = format_pre_comment(context)
+    pre_comment = format_pre_comment(forge_context)
     if forge_pre_comment:
-        context.report(
+        forge_context.report(
             ForgeResult.empty(),
             [ForgeFormatter(forge_pre_comment, lambda *_: pre_comment)],
         )
@@ -1307,11 +1373,8 @@ def test(
         return
 
     try:
-        print(f"Using cluster: {forge_cluster_name}")
-        set_current_cluster(shell, forge_cluster_name)
-
         forge_runner = forge_runner_mapping[forge_runner_mode]()
-        result = forge_runner.run(context)
+        result = forge_runner.run(forge_context)
 
         outputs = []
         if forge_output:
@@ -1319,29 +1382,32 @@ def test(
         if forge_report:
             outputs.append(ForgeFormatter(forge_report, format_report))
         else:
-            print(format_report(context, result))
+            print(format_report(forge_context, result))
         if forge_comment:
             outputs.append(ForgeFormatter(forge_comment, format_comment))
         else:
-            print(format_comment(context, result))
+            print(format_comment(forge_context, result))
         if github_step_summary:
             outputs.append(ForgeFormatter(github_step_summary, format_comment))
-        context.report(result, outputs)
+        forge_context.report(result, outputs)
 
-        print(result.format(context))
+        print(result.format(forge_context))
 
         if not result.succeeded() and forge_blocking == "true":
             raise SystemExit(1)
 
     except Exception as e:
-        if current_cluster:
-            try:
-                set_current_cluster(shell, current_cluster)
-            except Exception as ee:
-                print(f"Warning: failed to restore current cluster: {ee}")
-                print("Set cluster manually with aws eks update-kubeconfig --name {current_cluster}")
         raise Exception(
-            "Forge state:\n" + dump_forge_state(shell, forge_namespace)
+            "\n".join(
+                [
+                    "Forge state:",
+                    dump_forge_state(
+                        shell,
+                        forge_namespace,
+                        forge_cluster.kubeconf,
+                    ),
+                ]
+            )
         ) from e
 
 
@@ -1354,7 +1420,9 @@ class ForgeJob:
     @classmethod
     def from_pod(cls, cluster: ForgeCluster, pod: GetPodsItem) -> ForgeJob:
         return cls(
-            name=pod["metadata"]["name"], phase=pod["status"]["phase"], cluster=cluster
+            name=pod["metadata"]["name"],
+            phase=pod["status"]["phase"],
+            cluster=cluster,
         )
 
     def running(self):
@@ -1448,7 +1516,13 @@ async def get_all_forge_jobs(
     return all_jobs
 
 
-@main.command("list-jobs")
+@main.group("job")
+def job() -> None:
+    """Subcommands for managing forge jobs"""
+    pass
+
+
+@job.command("list")
 @click.option("--phase", multiple=True, help="Only show jobs in this phase")
 @click.option("--regex", help="Only show jobs matching this regex")
 def list_jobs(
@@ -1459,7 +1533,8 @@ def list_jobs(
     shell = LocalShell()
     filesystem = LocalFilesystem()
     processes = SystemProcesses()
-    context = SystemContext(shell, filesystem, processes)
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
     config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
     config.init()
 
@@ -1493,7 +1568,8 @@ def tail(
     shell = LocalShell()
     filesystem = LocalFilesystem()
     processes = SystemProcesses()
-    context = SystemContext(shell, filesystem, processes)
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
     config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
     config.init()
 
@@ -1528,21 +1604,50 @@ DEFAULT_CONFIG = "forge-wrapper-config"
 DEFAULT_CONFIG_KEY = "forge-wrapper-config.json"
 
 
+class TestConfig(TypedDict):
+    name: str
+
+
+class TestSuite(TypedDict):
+    name: str
+    all_tests: Mapping[str, TestConfig]
+    enabled_tests: Mapping[str, TestConfig]
+
+
 # All changes to this struct must be backwards compatible
 # i.e. its ok to add a new field, but not to remove one
 class ForgeConfigValue(TypedDict):
     enabled_clusters: List[str]
     all_clusters: List[str]
+    test_suites: Mapping[str, TestSuite]
+    default_helm_values: Mapping
 
 
 def default_forge_config() -> ForgeConfigValue:
-    return {
+    # Return a default config with not all the fields, as they are not mandatory
+    # This ensures we check for backwards compatibility
+    return {  # type: ignore
         "enabled_clusters": [],
         "all_clusters": [],
     }
 
 
+def validate_forge_config_default_helm_values(value: Any) -> List[str]:
+    """Validate that the given forge config has a valid default_helm_values config. Returns a list of error messages"""
+    errors = []
+    try:
+        keys = value["default_helm_values"].keys()
+        for chart in HELM_CHARTS:
+            if chart not in keys:
+                errors.append(f"Missing required chart {chart} in default_helm_values")
+    except Exception as e:
+        errors.append(f"Invalid default_helm_values: {e}")
+
+    return errors
+
+
 def validate_forge_config(value: Any) -> List[str]:
+    """Validate that the given forge config has all the required fields. Returns a list of error messages"""
     errors = []
     if not isinstance(value, dict):
         return ["Value must be derived from dict"]
@@ -1555,6 +1660,7 @@ def validate_forge_config(value: Any) -> List[str]:
     for cluster in value["enabled_clusters"]:
         if not isinstance(cluster, str):
             errors.append("Cluster must be a string")
+
     return errors
 
 
@@ -1564,6 +1670,23 @@ def ensure_forge_config(value: Any) -> ForgeConfigValue:
     if errors:
         raise Exception("Type had errors:\n" + "\n".join(errors))
     return value
+
+
+def get_forge_config_diff(
+    old_config: ForgeConfigValue,
+    new_config: ForgeConfigValue,
+    full_diff: Optional[bool] = False,
+) -> Iterator[str]:
+    """Returns a list of diffs between the old and new config"""
+    config_string = json.dumps(new_config, indent=2)
+    old_config_string = json.dumps(old_config, indent=2)
+    old_lines = old_config_string.splitlines()
+    new_lines = config_string.splitlines()
+    if full_diff:
+        diff = difflib.Differ()
+        return diff.compare(old_lines, new_lines)
+    else:
+        return difflib.unified_diff(old_lines, new_lines)
 
 
 class ForgeConfigBackend:
@@ -1584,28 +1707,39 @@ class S3ForgeConfigBackend(ForgeConfigBackend):
     key: str = DEFAULT_CONFIG_KEY
 
     def create(self) -> None:
-        self.system.shell.run([
-            "aws", "s3", "mb", f"s3://{self.name}"
-        ]).unwrap()
+        self.system.shell.run(["aws", "s3", "mb", f"s3://{self.name}"]).unwrap()
 
     def write(self, config: object) -> None:
         temp = self.system.filesystem.mkstemp()
         self.system.filesystem.write(temp, json.dumps(config).encode())
-        self.system.shell.run([
-            "aws", "s3api", "put-object",
-            "--bucket", self.name,
-            "--key", self.key,
-            "--body", temp,
-        ]).unwrap()
+        self.system.shell.run(
+            [
+                "aws",
+                "s3api",
+                "put-object",
+                "--bucket",
+                self.name,
+                "--key",
+                self.key,
+                "--body",
+                temp,
+            ]
+        ).unwrap()
 
     def read(self) -> object:
         temp = self.system.filesystem.mkstemp()
-        self.system.shell.run([
-            "aws", "s3api", "get-object",
-            "--bucket", self.name,
-            "--key", self.key,
-            temp,
-        ]).unwrap()
+        self.system.shell.run(
+            [
+                "aws",
+                "s3api",
+                "get-object",
+                "--bucket",
+                self.name,
+                "--key",
+                self.key,
+                temp,
+            ]
+        ).unwrap()
         return json.loads(self.system.filesystem.read(temp))
 
 
@@ -1629,6 +1763,8 @@ class FilesystemConfigBackend(ForgeConfigBackend):
 
 
 class ForgeConfig:
+    NONE_SENTINEL = object()
+
     def __init__(self, backend: ForgeConfigBackend) -> None:
         self.backend = backend
         self.config: ForgeConfigValue = default_forge_config()
@@ -1639,8 +1775,11 @@ class ForgeConfig:
     def init(self) -> None:
         self.config = ensure_forge_config(self.backend.read())
 
-    def get(self, key: str) -> Any:
-        return self.config[key]
+    def get(self, key: str, default: Optional[Any] = NONE_SENTINEL) -> Any:
+        value = self.config.get(key, default)
+        if value is self.NONE_SENTINEL:
+            raise Exception(f"Missing key {key} in Forge config")
+        return value
 
     def set(self, key, value, validate: bool = True) -> None:
         new_config = {**self.config, key: value}
@@ -1664,23 +1803,38 @@ def config() -> None:
 
 @config.command("create")
 def create_config() -> None:
+    """Create a new forge config at the default location"""
     shell = LocalShell()
     filesystem = LocalFilesystem()
     processes = SystemProcesses()
-    context = SystemContext(shell, filesystem, processes)
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
     config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
     config.create()
 
 
 @config.command("get")
-def get_config() -> None:
+@click.argument("key", type=str, required=False)
+def get_config(key: Optional[str]) -> None:
+    """Print the forge configuration"""
     shell = LocalShell(True)
     filesystem = LocalFilesystem()
     processes = SystemProcesses()
-    context = SystemContext(shell, filesystem, processes)
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
     config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
     config.init()
-    pprint(config.dump())
+
+    try:
+        val = config.dump().get(key) if key else config.dump()
+        if not val:
+            raise Exception(f"No config value found for key {key}")
+    except Exception as e:
+        raise click.ClickException(str(e))
+
+    # print the config as JSON so it looks nicer
+    config_string = json.dumps(val, indent=2)
+    print(config_string)
 
 
 def keyword_argument(value: str) -> Tuple[str, str]:
@@ -1693,26 +1847,28 @@ def keyword_argument(value: str) -> Tuple[str, str]:
 @config.command("set")
 @click.option("--force", is_flag=True, help="Disable config validation")
 @click.option(
-    "--config",
-    "config_path",
-    help="Provide a file to replace the current config"
+    "--config", "config_path", help="Provide a file to replace the current config"
 )
 @click.argument("values", type=keyword_argument, nargs=-1)
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
 def set_config(
     force: Optional[bool],
     config_path: Optional[str],
-    values: List[Tuple[str, str]]
+    values: List[Tuple[str, str]],
+    y: bool,
 ) -> None:
+    """Replace forge configuration values with local config"""
     shell = LocalShell()
     filesystem = LocalFilesystem()
     processes = SystemProcesses()
-    context = SystemContext(shell, filesystem, processes)
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
     config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
 
+    old_config = deepcopy(config.dump())
+
     if config_path:
-        local_config = ForgeConfig(
-            FilesystemConfigBackend(config_path, context)
-        )
+        local_config = ForgeConfig(FilesystemConfigBackend(config_path, context))
         local_config.init()
         for k, v in local_config.dump().items():
             config.set(k, v, validate=not force)
@@ -1723,7 +1879,495 @@ def set_config(
     for k, v in values:
         config.set(k, v, validate=not force)
 
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
+
+
+@config.command("edit")
+@click.pass_context
+def config_edit(ctx: click.Context) -> None:
+    """Edit forge configuration via interactive text editor"""
+    shell = LocalShell(True)
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    context = SystemContext(shell, filesystem, processes, SystemTime())
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+    config.init()
+
+    temp = filesystem.mkstemp()
+    filesystem.write(temp, json.dumps(config.dump(), indent=2).encode())
+    editor = os.getenv("EDITOR", "vim")
+    os.system(f"{editor} {temp}")
+    ctx.invoke(set_config, config_path=temp)
+
+
+@config.group("helm")
+def helm_config() -> None:
+    """Manage forge helm configuration"""
+    pass
+
+
+def assert_helm_chart_valid(chart: str) -> None:
+    if chart not in HELM_CHARTS:
+        raise Exception(f"Invalid helm chart {chart}")
+
+
+@helm_config.command("get")
+@click.argument("chart", type=str, required=True)
+def helm_config_get(chart: str) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    assert_helm_chart_valid(chart)
+
+    config.init()
+
+    default_helm_values = config.get("default_helm_values").get(chart)
+    if not default_helm_values:
+        raise Exception(f"No helm values found for chart {chart}")
+    print(json.dumps(default_helm_values, indent=2))
+
+
+@helm_config.command("set")
+@click.argument("chart", type=str, required=True)
+@click.option(
+    "--config",
+    "config_path",
+    help="Provide a file to replace the current config",
+    required=True,
+)
+@click.option("--force", is_flag=True, help="Disable config validation")
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
+def helm_config_set(
+    chart: str, config_path: str, force: Optional[bool], y: bool
+) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    assert_helm_chart_valid(chart)
+
+    # read existing config
+    config.init()
+
+    # read new helm config and set it as a corresponding key
+    local_config = FilesystemConfigBackend(config_path, context)
+    local_config_values = local_config.read()
+    old_config = deepcopy(config.dump())
+
+    # set the default_helm_values key if it doesnt exist
+    try:
+        config.get("default_helm_values")
+    except Exception:
+        config.set("default_helm_values", {}, validate=not force)
+
+    # merge the local configs into the existing config
+    new_default_helm_values = {
+        **config.get("default_helm_values"),
+        **{chart: local_config_values},
+    }
+
+    config.set("default_helm_values", new_default_helm_values, validate=not force)
+
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
+
+
+@config.group("cluster")
+def cluster_config() -> None:
+    """Manage forge cluster configuration"""
+    pass
+
+
+@cluster_config.command("delete")
+@click.argument("cluster")
+@click.option("--force", is_flag=True, help="Disable config validation")
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
+def cluster_config_delete(
+    cluster: str,
+    force: Optional[bool],
+    y: bool,
+) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    context = SystemContext(shell, filesystem, processes, SystemTime())
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+    old_config = deepcopy(config.dump())
+
+    enabled_clusters = config.get("enabled_clusters")
+    if cluster in enabled_clusters and not force:
+        raise Exception(f"Cluster {cluster} is enabled, use --force to delete anyway")
+    all_clusters = config.get("all_clusters")
+
+    try:
+        all_clusters.remove(cluster)
+    except ValueError:
+        raise Exception(f"Cluster {cluster} does not exist")
+
+    config.set("all_clusters", all_clusters)
+
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
+
+
+@cluster_config.command("add")
+@click.argument("cluster")
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
+def cluster_config_add(cluster: str, y: bool) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+    old_config = deepcopy(config.dump())
+
+    all_clusters = config.get("all_clusters")
+    if cluster in all_clusters:
+        raise Exception(f"Cluster {cluster} already exists")
+    all_clusters.append(cluster)
+    config.set("all_clusters", all_clusters)
+
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
+
+
+@cluster_config.command("enable")
+@click.argument("cluster")
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
+def cluster_config_enable(cluster: str, y: bool) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+    old_config = deepcopy(config.dump())
+
+    enabled_clusters = config.get("enabled_clusters")
+    if cluster in enabled_clusters:
+        raise Exception(f"Cluster {cluster} is already enabled")
+    enabled_clusters.append(cluster)
+    config.set("enabled_clusters", enabled_clusters)
+
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
+
+
+@cluster_config.command("disable")
+@click.argument("cluster")
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
+def cluster_config_disable(
+    cluster: str,
+    y: bool,
+) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+    old_config = deepcopy(config.dump())
+
+    enabled_clusters = config.get("enabled_clusters")
+    enabled_clusters.remove(cluster)
+    config.set("enabled_clusters", enabled_clusters)
+
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
+
+
+@cluster_config.command("list")
+def cluster_config_list() -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+
+    enabled_clusters = config.get("enabled_clusters")
+    for cluster in config.get("all_clusters"):
+        if cluster in enabled_clusters:
+            fg = "green"
+            enabled = " [enabled]"
+        else:
+            fg = "white"
+            enabled = ""
+
+        click.secho(f"{cluster}{enabled}", fg=fg)
+
     config.flush()
+
+
+@config.group("test")
+def test_config() -> None:
+    """Manage forge test configuration"""
+    pass
+
+
+@test_config.command("add")
+@click.argument("suite_name")
+@click.argument("test_name", required=False)
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
+def test_config_add(
+    suite_name: str,
+    test_name: Optional[str],
+    y: bool,
+) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+    old_config = deepcopy(config.dump())
+
+    suites = config.get("test_suites")
+    if suites is None:
+        raise Exception("Failed to get suites")
+    test_suite = suites.get(
+        suite_name,
+        {
+            "name": suite_name,
+            "all_tests": {},
+            "enabled_tests": {},
+        },
+    )
+
+    if test_name in test_suite["all_tests"]:
+        raise Exception(f"Test {test_name} already exists")
+
+    if test_name:
+        test_suite["all_tests"][test_name] = {
+            "name": test_name,
+        }
+
+    suites[suite_name] = test_suite
+
+    config.set("test_suites", suites)
+
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
+
+
+@test_config.command("show")
+@click.argument("suite", required=False)
+def test_config_show(
+    suite: Optional[str],
+) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+
+    test_suites = config.get("test_suites")
+    for suite_name in test_suites:
+        print(suite_name)
+        if suite and suite_name != suite:
+            continue
+        suite_config = test_suites[suite_name]
+        for test_name in suite_config["all_tests"]:
+            if test_name in suite_config.get("enabled_tests"):
+                fg = "green"
+                enabled = " [enabled]"
+            else:
+                fg = ""
+                enabled = ""
+
+            click.secho(f" - {test_name}{enabled}", fg=fg)
+
+
+@test_config.command("list")
+def test_config_list() -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+
+    test_suites = config.get("test_suites")
+
+    for suite_name in test_suites:
+        print(suite_name)
+
+
+@test_config.command("delete")
+@click.argument("suite_name")
+@click.argument("test_name", required=False)
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
+def test_config_delete(
+    suite_name: str,
+    test_name: Optional[str],
+    y: bool,
+) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+    old_config = deepcopy(config.dump())
+
+    suites = config.get("test_suites")
+
+    if test_name:
+        suite_config = suites.get(suite_name)
+        if test_name in suite_config.get("enabled_tests"):
+            raise Exception(f"Cannot delete enabled test {test_name}")
+        del suite_config["enabled_tests"][test_name]
+        suites[suite_name] = suite_config
+    else:
+        del suites[suite_name]
+
+    config.set("test_suites", suites)
+
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
+
+
+@test_config.command("enable")
+@click.argument("suite_name")
+@click.argument("test_name")
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
+def test_config_enable(
+    suite_name: str,
+    test_name: str,
+    y: bool,
+) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+    old_config = deepcopy(config.dump())
+
+    suites = config.get("test_suites")
+    suite_config = suites.get(suite_name)
+
+    if test_name in suite_config.get("enabled_tests"):
+        raise Exception(f"{test_name} is already enabled")
+
+    test_config = suite_config.get("all_tests").get(test_name)
+    if test_config is None:
+        raise Exception(f"Cannot find test {test_name}")
+
+    suite_config["enabled_tests"][test_name] = test_config
+    suites[suite_name] = suite_config
+
+    config.set("test_suites", suites)
+
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
+
+
+@test_config.command("disable")
+@click.argument("suite_name")
+@click.argument("test_name")
+@click.option("-y", is_flag=True, help="Accept all interactive prompts")
+def test_config_disable(
+    suite_name: str,
+    test_name: str,
+    y: bool,
+) -> None:
+    shell = LocalShell()
+    filesystem = LocalFilesystem()
+    processes = SystemProcesses()
+    time = SystemTime()
+    context = SystemContext(shell, filesystem, processes, time)
+    config = ForgeConfig(S3ForgeConfigBackend(context, DEFAULT_CONFIG))
+
+    config.init()
+    old_config = deepcopy(config.dump())
+
+    suites = config.get("test_suites")
+    suite_config = suites.get(suite_name)
+
+    if test_name not in suite_config.get("enabled_tests"):
+        raise Exception(f"{test_name} is not enabled")
+
+    test_config = suite_config.get("all_tests").get(test_name)
+    if test_config is None:
+        raise Exception(f"Cannot find test {test_name}")
+
+    del suite_config["enabled_tests"][test_name]
+    suites[suite_name] = suite_config
+
+    config.set("test_suites", suites)
+    d = get_forge_config_diff(old_config, config.dump())
+    print("\n".join(d))
+    if y or get_prompt_answer("Would you like to apply the config change now?"):
+        config.flush()
+    else:
+        print("Config not updated")
 
 
 if __name__ == "__main__":

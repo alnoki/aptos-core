@@ -102,16 +102,16 @@ const jar = new CookieJar();
 axios.interceptors.response.use((response) => {
   if (Array.isArray(response.headers["set-cookie"])) {
     response.headers["set-cookie"].forEach((c) => {
-      jar.setCookie(new URL(response.config.url), c);
+      jar.setCookie(new URL(response.config.url!), c);
     });
   }
   return response;
 });
 
 axios.interceptors.request.use(function (config) {
-  const cookies = jar.getCookies(new URL(config.url));
+  const cookies = jar.getCookies(new URL(config.url!));
 
-  if (cookies?.length > 0) {
+  if (cookies?.length > 0 && config.headers) {
     config.headers.cookie = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
   }
   return config;
@@ -355,6 +355,7 @@ const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): void =>
         401: 'Unauthorized',
         403: 'Forbidden',
         404: 'Not Found',
+        429: 'Too Many Requests',
         500: 'Internal Server Error',
         502: 'Bad Gateway',
         503: 'Service Unavailable',
@@ -401,7 +402,14 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): C
 
                 catchErrorCodes(options, result);
 
-                resolve(result.body);
+                // Attach the response headers to the output. This is a hack to fix
+                // https://github.com/ferdikoomen/openapi-typescript-codegen/issues/1295
+                const out = result.body;
+                try {
+                    out["__headers"] = response.headers;
+                } catch (_) {}
+
+                resolve(out);
             }
         } catch (error) {
             reject(error);

@@ -83,15 +83,12 @@ impl DirectMempoolQuorumStore {
         let (txns, result) = match payload_filter {
             PayloadFilter::DirectMempool(exclude_txns) => {
                 match self.pull_internal(max_txns, max_bytes, exclude_txns).await {
-                    Err(_) => {
-                        error!("GetBatch failed");
+                    Err(e) => {
+                        error!("GetBatch failed {:?}", e);
                         (vec![], counters::REQUEST_FAIL_LABEL)
                     }
                     Ok(txns) => (txns, counters::REQUEST_SUCCESS_LABEL),
                 }
-            }
-            _ => {
-                panic!("Unknown payload_filter: {}", payload_filter)
             }
         };
         counters::quorum_store_service_latency(

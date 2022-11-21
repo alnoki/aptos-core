@@ -1,9 +1,9 @@
 ---
-title: "Using CLI to Run a Local Testnet"
+title: "Run Local Testnet with CLI"
 id: "using-cli-to-run-a-local-testnet"
 ---
 
-# Using CLI to Run a Local Testnet
+# Run a Local Testnet with Aptos CLI
 
 :::tip Using source or Docker run a local testnet
 
@@ -13,7 +13,7 @@ If you want to use Docker or `aptos-core` source to start and run a local testne
 You can run a local testnet of the Aptos blockchain. This local testnet will not be connected to the Aptos devnet. It will run on your local machine, independent of other Aptos networks. You can use this local testnet for testing and development purposes. A local testnet is a great tool for doing local development against a known version of the codebase without having to interact with a live network or deal with the real world costs of a live network.
 
 :::tip Aptos CLI documentation
-If you are new to Aptos CLI, then see this comprehensive [Aptos CLI documentation](/cli-tools/aptos-cli-tool/index.md).
+If you are new to Aptos CLI, then see this comprehensive [Aptos CLI documentation](/cli-tools/aptos-cli-tool/use-aptos-cli.md).
 :::
 
 ## Starting a local testnet with a faucet
@@ -166,7 +166,7 @@ If you're getting an error similar to this error:
 
 This means you are either already running a node, or you have another process running on that port.
 
-On MacOS and Linux you can run the following command to get the name and PID of the process using the port:
+On macOS and Linux, you can run the following command to get the name and PID of the process using the port:
 
 ```bash
 PORT=9101

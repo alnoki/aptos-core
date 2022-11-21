@@ -9,7 +9,6 @@ use crate::{
     transaction_generator::TransactionGenerator,
     EmitModeParams,
 };
-use aptos_logger::sample::Sampling;
 use aptos_logger::{sample, sample::SampleRate, warn};
 use aptos_rest_client::Client as RestClient;
 use aptos_sdk::types::{transaction::SignedTransaction, vm_status::StatusCode, LocalAccount};
@@ -332,7 +331,7 @@ pub async fn submit_transactions(
                             client
                                 .get_account_transactions_bcs(
                                     sender,
-                                    Some(account.into_inner().sequence_number() - 1),
+                                    Some(account.into_inner().sequence_number().saturating_sub(1)),
                                     Some(5),
                                 )
                                 .await

@@ -5,7 +5,7 @@
 
 mod log_build_information;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use aptos_api::bootstrap as bootstrap_api;
 use aptos_build_info::build_information;
 use aptos_config::{
@@ -164,7 +164,7 @@ impl AptosNodeArgs {
 
 /// Runtime handle to ensure that all inner runtimes stay in scope
 pub struct AptosHandle {
-    _api: Runtime,
+    _api: Option<Runtime>,
     _backup: Runtime,
     _consensus_runtime: Option<Runtime>,
     _mempool: Runtime,
@@ -197,8 +197,7 @@ pub fn start(
         .level(config.logger.level)
         .telemetry_level(config.logger.telemetry_level)
         .enable_telemetry_flush(config.logger.enable_telemetry_flush)
-        .console_port(config.logger.console_port)
-        .read_env();
+        .console_port(config.logger.console_port);
     if config.logger.enable_backtrace {
         logger_builder.enable_backtrace();
     }
@@ -301,9 +300,8 @@ where
         fnn.runtime_threads = Some(1);
         // If a config path was provided, use that as the template
         if let Some(config_path) = config_path {
-            if let Ok(config) = NodeConfig::load_config(config_path) {
-                template = config;
-            }
+            template = NodeConfig::load_config(&config_path)
+                .with_context(|| format!("Failed to load config at path: {:?}", config_path))?;
         }
 
         template.logger.level = Level::Debug;
@@ -590,7 +588,7 @@ pub fn setup_environment(
             node_config.storage.storage_pruner_config,
             node_config.storage.rocksdb_configs,
             node_config.storage.enable_indexer,
-            node_config.storage.target_snapshot_size,
+            node_config.storage.buffered_state_target_items,
             node_config.storage.max_num_nodes_per_lru_cache_shard,
         )
         .map_err(|err| anyhow!("DB failed to open {}", err))?,
@@ -608,10 +606,20 @@ pub fn setup_environment(
     } else {
         info!("Genesis txn not provided, it's fine if you don't expect to apply it otherwise please double check config");
     }
+    AptosVM::set_runtime_config(
+        node_config.execution.paranoid_type_verification,
+        node_config.execution.paranoid_hot_potato_verification,
+    );
     AptosVM::set_concurrency_level_once(node_config.execution.concurrency_level as usize);
     AptosVM::set_num_proof_reading_threads_once(
         node_config.execution.num_proof_reading_threads as usize,
     );
+    if node_config
+        .execution
+        .processed_transactions_detailed_counters
+    {
+        AptosVM::set_processed_transactions_detailed_counters();
+    }
 
     debug!(
         "Storage service started in {} ms",
@@ -666,6 +674,18 @@ pub fn setup_environment(
     let peer_metadata_storage = PeerMetadataStorage::new(&network_ids);
 
     let chain_id = fetch_chain_id(&db_rw)?;
+
+    let build_info = build_information!();
+    // Start the telemetry service as early as possible and before any blocking calls
+    // We have all the necesary info here to start the telemetry service
+    let telemetry_runtime = aptos_telemetry::service::start_telemetry_service(
+        node_config.clone(),
+        chain_id,
+        build_info,
+        remote_log_rx,
+        logger_filter_update_job,
+    );
+
     for network_config in network_configs.into_iter() {
         let network_id = network_config.network_id;
         debug!("Creating runtime for {}", network_id);
@@ -778,12 +798,16 @@ pub fn setup_environment(
 
     let (mp_client_sender, mp_client_events) = mpsc::channel(AC_SMP_CHANNEL_BUFFER_SIZE);
 
-    let api_runtime = bootstrap_api(
-        &node_config,
-        chain_id,
-        aptos_db.clone(),
-        mp_client_sender.clone(),
-    )?;
+    let api_runtime = if node_config.api.enabled {
+        Some(bootstrap_api(
+            &node_config,
+            chain_id,
+            aptos_db.clone(),
+            mp_client_sender.clone(),
+        )?)
+    } else {
+        None
+    };
     let sf_runtime = match bootstrap_fh_stream(
         &node_config,
         chain_id,
@@ -851,16 +875,6 @@ pub fn setup_environment(
         debug!("Consensus started in {} ms", instant.elapsed().as_millis());
     }
 
-    let build_info = build_information!();
-    // Create the telemetry service
-    let telemetry_runtime = aptos_telemetry::service::start_telemetry_service(
-        node_config.clone(),
-        chain_id,
-        build_info,
-        remote_log_rx,
-        logger_filter_update_job,
-    );
-
     Ok(AptosHandle {
         _api: api_runtime,
         _backup: backup_service,
@@ -873,6 +887,17 @@ pub fn setup_environment(
         _telemetry_runtime: telemetry_runtime,
     })
 }
+
+pub const ERROR_MSG_BAD_FEATURE_FLAGS: &str = r#"
+aptos-node was compiled with feature flags that shouldn't be enabled.
+
+This is caused by cargo's feature unification.
+When you compile two crates with a shared dependency, if one enables a feature flag for the dependency, then it is also enabled for the other crate.
+
+PLEASE RECOMPILE APTOS-NODE SEPARATELY using the following command:
+    cargo build --package aptos-node
+
+"#;
 
 #[cfg(test)]
 mod tests {
@@ -896,5 +921,11 @@ mod tests {
 
         // Starting the node should panic
         setup_environment(node_config, None, None).unwrap();
+    }
+
+    #[cfg(feature = "check-vm-features")]
+    #[test]
+    fn test_aptos_vm_does_not_have_test_natives() {
+        aptos_vm::natives::assert_no_test_natives(crate::ERROR_MSG_BAD_FEATURE_FLAGS)
     }
 }

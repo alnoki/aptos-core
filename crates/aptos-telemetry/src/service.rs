@@ -9,7 +9,7 @@ use aptos_logger::{
     LoggerFilterUpdater,
 };
 use aptos_telemetry_service::types::telemetry::{TelemetryDump, TelemetryEvent};
-use aptos_types::chain_id::ChainId;
+use aptos_types::chain_id::{ChainId, NamedChain};
 use futures::channel::mpsc::{self, Receiver};
 use once_cell::sync::Lazy;
 use rand::Rng;
@@ -45,6 +45,8 @@ const TELEMETRY_TOKEN_KEY: &str = "TELEMETRY_TOKEN";
 // The default for unknown metric values
 const UNKNOWN_METRIC_VALUE: &str = "UNKNOWN";
 
+const APTOS_NODE_CONFIG_EVENT_NAME: &str = "APTOS_NODE_CONFIG";
+
 /// The random token presented by the node to connect all
 /// telemetry events.
 /// TODO(joshlind): leverage real authentication!
@@ -56,7 +58,7 @@ static TELEMETRY_TOKEN: Lazy<String> = Lazy::new(|| {
 
 /// Returns true iff telemetry is disabled
 #[inline]
-fn telemetry_is_disabled() -> bool {
+pub fn telemetry_is_disabled() -> bool {
     env::var(ENV_APTOS_DISABLE_TELEMETRY).is_ok()
 }
 
@@ -147,8 +149,13 @@ async fn spawn_telemetry_service(
     remote_log_rx: Option<mpsc::Receiver<TelemetryLog>>,
     logger_filter_update_job: Option<LoggerFilterUpdater>,
 ) {
-    let telemetry_svc_url =
-        env::var(ENV_TELEMETRY_SERVICE_URL).unwrap_or_else(|_| TELEMETRY_SERVICE_URL.into());
+    let telemetry_svc_url = env::var(ENV_TELEMETRY_SERVICE_URL).unwrap_or_else(|_| {
+        if chain_id == ChainId::mainnet() || chain_id == ChainId::new(NamedChain::PREMAINNET.id()) {
+            MAINNET_TELEMETRY_SERVICE_URL.into()
+        } else {
+            TELEMETRY_SERVICE_URL.into()
+        }
+    });
 
     let telemetry_sender = TelemetrySender::new(telemetry_svc_url, chain_id, &node_config);
 
@@ -197,6 +204,7 @@ async fn spawn_telemetry_service(
 fn try_spawn_log_env_poll_task(sender: TelemetrySender) {
     if enable_log_env_polling() {
         tokio::spawn(async move {
+            let original_value = env::var(RUST_LOG_TELEMETRY).ok();
             let mut interval = time::interval(Duration::from_secs(LOG_ENV_POLL_FREQ_SECS));
             loop {
                 interval.tick().await;
@@ -208,6 +216,10 @@ fn try_spawn_log_env_poll_task(sender: TelemetrySender) {
                         env
                     );
                     env::set_var(RUST_LOG_TELEMETRY, env)
+                } else if let Some(ref value) = original_value {
+                    env::set_var(RUST_LOG_TELEMETRY, value)
+                } else {
+                    env::remove_var(RUST_LOG_TELEMETRY)
                 }
             }
         });
@@ -287,16 +299,16 @@ async fn custom_event_sender(
     node_config: NodeConfig,
     build_info: BTreeMap<String, String>,
 ) {
-    // Send build information once (only on startup)
-    send_build_information(
-        peer_id.clone(),
-        chain_id.to_string(),
-        build_info,
-        telemetry_sender.clone(),
-    )
-    .await;
-
-    futures::future::join3(
+    futures::future::join5(
+        // Periodically send build information
+        run_function_periodically(NODE_BUILD_INFO_FREQ_SECS, || {
+            send_build_information(
+                peer_id.clone(),
+                chain_id.to_string(),
+                build_info.clone(),
+                telemetry_sender.clone(),
+            )
+        }),
         // Periodically send system information
         run_function_periodically(NODE_SYS_INFO_FREQ_SECS, || {
             send_system_information(
@@ -322,6 +334,14 @@ async fn custom_event_sender(
                 telemetry_sender.clone(),
             )
         }),
+        run_function_periodically(NODE_CONFIG_FREQ_SECS, || {
+            send_node_config(
+                peer_id.clone(),
+                chain_id.to_string(),
+                &node_config,
+                telemetry_sender.clone(),
+            )
+        }),
     )
     .await;
 }
@@ -334,6 +354,33 @@ async fn send_build_information(
     telemetry_sender: Option<TelemetrySender>,
 ) {
     let telemetry_event = create_build_info_telemetry_event(build_info).await;
+    send_telemetry_event_with_ip(peer_id, chain_id, telemetry_sender, telemetry_event).await;
+}
+
+/// Collects and sends the core node metrics via telemetry
+async fn send_node_config(
+    peer_id: String,
+    chain_id: String,
+    node_config: &NodeConfig,
+    telemetry_sender: Option<TelemetrySender>,
+) {
+    let node_config: BTreeMap<String, String> = serde_json::to_value(node_config)
+        .map(|value| {
+            value
+                .as_object()
+                .map(|obj| {
+                    obj.into_iter()
+                        .map(|(k, v)| (k.clone(), v.to_string()))
+                        .collect::<BTreeMap<String, String>>()
+                })
+                .unwrap_or_default()
+        })
+        .unwrap_or_default();
+
+    let telemetry_event = TelemetryEvent {
+        name: APTOS_NODE_CONFIG_EVENT_NAME.into(),
+        params: node_config,
+    };
     send_telemetry_event_with_ip(peer_id, chain_id, telemetry_sender, telemetry_event).await;
 }
 

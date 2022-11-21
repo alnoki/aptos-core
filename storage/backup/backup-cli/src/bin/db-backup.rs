@@ -142,7 +142,7 @@ async fn main() -> Result<()> {
 }
 
 async fn main_impl() -> Result<()> {
-    Logger::new().level(Level::Info).read_env().init();
+    Logger::new().level(Level::Info).init();
     #[allow(deprecated)]
     let _mp = MetricsPusher::start();
 
@@ -165,7 +165,7 @@ async fn main_impl() -> Result<()> {
                         opt.concurrent_downloads.get(),
                     )
                     .await?;
-                    println!("{}", view.get_storage_state())
+                    println!("{}", view.get_storage_state()?)
                 }
             },
             OneShotCommand::Backup(opt) => {

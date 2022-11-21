@@ -1,13 +1,14 @@
 // Copyright (c) Aptos
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::chain_id::ChainId;
 use crate::{
     access_path::AccessPath,
     account_config::CORE_CODE_ADDRESS,
     event::{EventHandle, EventKey},
 };
 use anyhow::{format_err, Result};
-use move_deps::move_core_types::{
+use move_core_types::{
     ident_str,
     identifier::{IdentStr, Identifier},
     language_storage::StructTag,
@@ -19,6 +20,7 @@ use std::{collections::HashMap, fmt, sync::Arc};
 mod approved_execution_hashes;
 mod aptos_features;
 mod aptos_version;
+mod chain_id;
 mod consensus_config;
 mod gas_schedule;
 mod validator_set;
@@ -30,7 +32,8 @@ pub use self::{
         Version, APTOS_MAX_KNOWN_VERSION, APTOS_VERSION_2, APTOS_VERSION_3, APTOS_VERSION_4,
     },
     consensus_config::{
-        ConsensusConfigV1, LeaderReputationType, OnChainConsensusConfig, ProposerElectionType,
+        ConsensusConfigV1, LeaderReputationType, OnChainConsensusConfig, ProposerAndVoterConfig,
+        ProposerElectionType,
     },
     gas_schedule::{GasSchedule, GasScheduleV2, StorageGasSchedule},
     validator_set::{ConsensusScheme, ValidatorSet},
@@ -65,6 +68,7 @@ pub const ON_CHAIN_CONFIG_REGISTRY: &[ConfigID] = &[
     ValidatorSet::CONFIG_ID,
     Version::CONFIG_ID,
     OnChainConsensusConfig::CONFIG_ID,
+    ChainId::CONFIG_ID,
 ];
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -172,10 +176,7 @@ pub fn new_epoch_event_key() -> EventKey {
 
 pub fn access_path_for_config(config_id: ConfigID) -> AccessPath {
     let struct_tag = struct_tag_for_config(config_id);
-    AccessPath::new(
-        CORE_CODE_ADDRESS,
-        AccessPath::resource_access_vec(struct_tag),
-    )
+    AccessPath::new(CORE_CODE_ADDRESS, AccessPath::resource_path_vec(struct_tag))
 }
 
 pub fn struct_tag_for_config(config_id: ConfigID) -> StructTag {

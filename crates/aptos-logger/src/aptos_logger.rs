@@ -4,15 +4,14 @@
 //! Implementation of writing logs to both local printers (e.g. stdout) and remote loggers
 //! (e.g. Logstash)
 
+use crate::sample::SampleRate;
 use crate::telemetry_log_writer::{TelemetryLog, TelemetryLogWriter};
 use crate::{
     counters::{
-        PROCESSED_STRUCT_LOG_COUNT, SENT_STRUCT_LOG_BYTES, SENT_STRUCT_LOG_COUNT,
-        STRUCT_LOG_PARSE_ERROR_COUNT, STRUCT_LOG_QUEUE_ERROR_COUNT, STRUCT_LOG_SEND_ERROR_COUNT,
+        PROCESSED_STRUCT_LOG_COUNT, STRUCT_LOG_PARSE_ERROR_COUNT, STRUCT_LOG_QUEUE_ERROR_COUNT,
     },
     logger::Logger,
-    struct_log::TcpWriter,
-    Event, Filter, Key, Level, LevelFilter, Metadata,
+    sample, Event, Filter, Key, Level, LevelFilter, Metadata,
 };
 use aptos_infallible::RwLock;
 use backtrace::Backtrace;
@@ -36,12 +35,10 @@ use strum_macros::EnumString;
 use tokio::time;
 
 const RUST_LOG: &str = "RUST_LOG";
-const RUST_LOG_REMOTE: &str = "RUST_LOG_REMOTE";
 pub const RUST_LOG_TELEMETRY: &str = "RUST_LOG_TELEMETRY";
 const RUST_LOG_FORMAT: &str = "RUST_LOG_FORMAT";
 /// Default size of log write channel, if the channel is full, logs will be dropped
 pub const CHANNEL_SIZE: usize = 10000;
-const NUM_SEND_RETRIES: u8 = 1;
 const FLUSH_TIMEOUT: Duration = Duration::from_secs(5);
 const FILTER_REFRESH_INTERVAL: Duration =
     Duration::from_secs(5 /* minutes */ * 60 /* seconds */);
@@ -212,7 +209,6 @@ pub struct AptosDataBuilder {
     level: Level,
     remote_level: Level,
     telemetry_level: Level,
-    address: Option<String>,
     printer: Option<Box<dyn Writer>>,
     remote_log_tx: Option<channel::mpsc::Sender<TelemetryLog>>,
     is_async: bool,
@@ -230,7 +226,6 @@ impl AptosDataBuilder {
             level: Level::Info,
             remote_level: Level::Info,
             telemetry_level: Level::Warn,
-            address: None,
             printer: Some(Box::new(StdoutWriter::new())),
             remote_log_tx: None,
             is_async: false,
@@ -239,20 +234,8 @@ impl AptosDataBuilder {
         }
     }
 
-    pub fn address(&mut self, address: String) -> &mut Self {
-        self.address = Some(address);
-        self
-    }
-
     pub fn enable_backtrace(&mut self) -> &mut Self {
         self.enable_backtrace = true;
-        self
-    }
-
-    pub fn read_env(&mut self) -> &mut Self {
-        if let Ok(address) = env::var("STRUCT_LOG_TCP_ADDR") {
-            self.address(address);
-        }
         self
     }
 
@@ -328,23 +311,6 @@ impl AptosDataBuilder {
 
             filter_builder.build()
         };
-        let remote_filter = {
-            let mut filter_builder = Filter::builder();
-
-            if self.is_async && self.address.is_some() {
-                if env::var(RUST_LOG_REMOTE).is_ok() {
-                    filter_builder.with_env(RUST_LOG_REMOTE);
-                } else if env::var(RUST_LOG).is_ok() {
-                    filter_builder.with_env(RUST_LOG);
-                } else {
-                    filter_builder.filter_level(self.remote_level.into());
-                }
-            } else {
-                filter_builder.filter_level(LevelFilter::Off);
-            }
-
-            filter_builder.build()
-        };
         let telemetry_filter = {
             let mut filter_builder = Filter::builder();
 
@@ -363,7 +329,6 @@ impl AptosDataBuilder {
 
         FilterTuple {
             local_filter,
-            remote_filter,
             telemetry_filter,
         }
     }
@@ -396,7 +361,6 @@ impl AptosDataBuilder {
             });
             let service = LoggerService {
                 receiver,
-                address: self.address.clone(),
                 printer: self.printer.take(),
                 facade: logger.clone(),
                 remote_tx,
@@ -434,17 +398,13 @@ impl AptosDataBuilder {
 pub struct FilterTuple {
     /// The local printer `Filter` to control what is logged in text output
     local_filter: Filter,
-    /// The remote logging `Filter` to control what is sent to external logging
-    remote_filter: Filter,
     /// The logging `Filter` to control what is sent to telemetry service
     telemetry_filter: Filter,
 }
 
 impl FilterTuple {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        self.local_filter.enabled(metadata)
-            || self.remote_filter.enabled(metadata)
-            || self.telemetry_filter.enabled(metadata)
+        self.local_filter.enabled(metadata) || self.telemetry_filter.enabled(metadata)
     }
 }
 
@@ -487,10 +447,6 @@ impl AptosData {
         self.filter.write().local_filter = filter;
     }
 
-    pub fn set_remote_filter(&self, filter: Filter) {
-        self.filter.write().remote_filter = filter;
-    }
-
     pub fn set_telemetry_filter(&self, filter: Filter) {
         self.filter.write().telemetry_filter = filter;
     }
@@ -530,10 +486,17 @@ impl Logger for AptosData {
     fn flush(&self) {
         if let Some(sender) = &self.sender {
             let (oneshot_sender, oneshot_receiver) = sync::mpsc::sync_channel(1);
-            sender
-                .send(LoggerServiceEvent::Flush(oneshot_sender))
-                .unwrap();
-            oneshot_receiver.recv().unwrap();
+            match sender.try_send(LoggerServiceEvent::Flush(oneshot_sender)) {
+                Ok(_) => {
+                    if let Err(err) = oneshot_receiver.recv_timeout(FLUSH_TIMEOUT) {
+                        eprintln!("[Logging] Unable to flush recv: {}", err);
+                    }
+                }
+                Err(err) => {
+                    eprintln!("[Logging] Unable to flush send: {}", err);
+                    std::thread::sleep(FLUSH_TIMEOUT);
+                }
+            }
         }
     }
 }
@@ -547,7 +510,6 @@ enum LoggerServiceEvent {
 /// or to a `AptosData` for external logging.
 struct LoggerService {
     receiver: sync::mpsc::Receiver<LoggerServiceEvent>,
-    address: Option<String>,
     printer: Option<Box<dyn Writer>>,
     facade: Arc<AptosData>,
     remote_tx: Option<channel::mpsc::Sender<TelemetryLog>>,
@@ -555,7 +517,6 @@ struct LoggerService {
 
 impl LoggerService {
     pub fn run(mut self) {
-        let mut tcp_writer = self.address.take().map(TcpWriter::new);
         let mut telemetry_writer = self.remote_tx.take().map(TelemetryLogWriter::new);
 
         for event in &self.receiver {
@@ -573,18 +534,6 @@ impl LoggerService {
                         {
                             let s = (self.facade.formatter)(&entry).expect("Unable to format");
                             printer.write_buferred(s);
-                        }
-                    }
-
-                    if let Some(writer) = &mut tcp_writer {
-                        if self
-                            .facade
-                            .filter
-                            .read()
-                            .remote_filter
-                            .enabled(&entry.metadata)
-                        {
-                            Self::write_to_logstash(writer, &entry);
                         }
                     }
 
@@ -608,11 +557,17 @@ impl LoggerService {
                             match writer.flush() {
                                 Ok(rx) => {
                                     if let Err(err) = rx.recv_timeout(FLUSH_TIMEOUT) {
-                                        eprintln!("flush recv failed: {}", err);
+                                        sample!(
+                                            SampleRate::Duration(Duration::from_secs(60)),
+                                            eprintln!("Timed out flushing telemetry: {}", err)
+                                        );
                                     }
                                 }
                                 Err(err) => {
-                                    eprintln!("flush failed: {}", err);
+                                    sample!(
+                                        SampleRate::Duration(Duration::from_secs(60)),
+                                        eprintln!("Failed to flush telemetry: {}", err)
+                                    );
                                 }
                             }
                         }
@@ -620,41 +575,6 @@ impl LoggerService {
                     let _ = sender.send(());
                 }
             }
-        }
-    }
-
-    /// Writes a log line into json_lines logstash format, which has a newline at the end
-    fn write_to_logstash(stream: &mut TcpWriter, entry: &LogEntry) {
-        let message = if let Ok(json) = json_format(entry) {
-            json
-        } else {
-            return;
-        };
-        let message = message + "\n";
-        let bytes = message.as_bytes();
-        let message_length = bytes.len();
-
-        // Attempt to write the log up to NUM_SEND_RETRIES + 1, and then drop it
-        // Each `write_all` call will attempt to open a connection if one isn't open
-        let mut result = stream.write_all(bytes);
-        for _ in 0..NUM_SEND_RETRIES {
-            if result.is_ok() {
-                break;
-            } else {
-                result = stream.write_all(bytes);
-            }
-        }
-
-        if let Err(e) = result {
-            STRUCT_LOG_SEND_ERROR_COUNT.inc();
-            eprintln!(
-                "[Logging] Error while sending data to logstash({}): {}",
-                stream.endpoint(),
-                e
-            );
-        } else {
-            SENT_STRUCT_LOG_COUNT.inc();
-            SENT_STRUCT_LOG_BYTES.inc_by(message_length as u64);
         }
     }
 }

@@ -79,12 +79,9 @@ spec:
         env:
         - name: RUST_LOG
           value: {{ .rust_log }}
-        - name: RUST_LOG_REMOTE
-          value: {{ .rust_log_remote }}
-      {{- end }}
-        {{- if $.Values.validator.remoteLogAddress }}
-        - name: STRUCT_LOG_TCP_ADDR
-          value: {{ $.Values.validator.remoteLogAddress }}
+        {{- if .force_enable_telemetry }}
+        - name: APTOS_FORCE_ENABLE_TELEMETRY
+          value: "true"
         {{- end }}
         - name: KUBERNETES_NAMESPACE
           valueFrom:
@@ -92,6 +89,7 @@ spec:
               fieldPath: metadata.namespace
         - name: RUST_BACKTRACE
           value: "0"
+      {{- end }}
         volumeMounts:
         - name: aptos-config
           mountPath: /opt/aptos/etc
@@ -106,13 +104,6 @@ spec:
           name: api
         - containerPort: 9101
           name: metrics
-        livenessProbe:
-          tcpSocket:
-            port: 9101
-          initialDelaySeconds: 30
-        readinessProbe:
-          tcpSocket:
-            port: 6182
         securityContext:
           {{- if $.Values.enablePrivilegedMode }}
           runAsUser: 0

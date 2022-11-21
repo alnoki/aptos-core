@@ -14,7 +14,8 @@ from typing import List
 
 from . import ed25519
 from .account_address import AccountAddress
-from .authenticator import Authenticator, Ed25519Authenticator, MultiAgentAuthenticator
+from .authenticator import (Authenticator, Ed25519Authenticator,
+                            MultiAgentAuthenticator)
 from .bcs import Deserializer, Serializer
 from .type_tag import StructTag, TypeTag
 
@@ -31,7 +32,7 @@ class RawTransaction:
     max_gas_amount: int
     # Price to be paid per gas unit.
     gas_unit_price: int
-    # Expiration timestamp ffor this transactions, represented as seconds from the Unix epoch.
+    # Expiration timestamp for this transaction, represented as seconds from the Unix epoch.
     expiration_timestamps_secs: int
     # Chain ID of the Aptos network this transaction is intended for.
     chain_id: int
@@ -54,7 +55,9 @@ class RawTransaction:
         self.expiration_timestamps_secs = expiration_timestamps_secs
         self.chain_id = chain_id
 
-    def __eq__(self, other: RawTransaction) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, RawTransaction):
+            return NotImplemented
         return (
             self.sender == other.sender
             and self.sequence_number == other.sequence_number
@@ -94,6 +97,7 @@ class RawTransaction:
     def verify(self, key: ed25519.PublicKey, signature: ed25519.Signature) -> bool:
         return key.verify(self.keyed(), signature)
 
+    @staticmethod
     def deserialize(deserializer: Deserializer) -> RawTransaction:
         return RawTransaction(
             AccountAddress.deserialize(deserializer),
@@ -170,12 +174,15 @@ class TransactionPayload:
             raise Exception("Invalid type")
         self.value = payload
 
-    def __eq__(self, other: TransactionPayload) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, TransactionPayload):
+            return NotImplemented
         return self.variant == other.variant and self.value == other.value
 
     def __str__(self) -> str:
         return self.value.__str__()
 
+    @staticmethod
     def deserialize(deserializer: Deserializer) -> TransactionPayload:
         variant = deserializer.uleb128()
 
@@ -199,6 +206,7 @@ class ModuleBundle:
     def __init__(self):
         raise NotImplementedError
 
+    @staticmethod
     def deserialize(deserializer: Deserializer) -> ModuleBundle:
         raise NotImplementedError
 
@@ -207,14 +215,100 @@ class ModuleBundle:
 
 
 class Script:
-    def __init__(self):
-        raise NotImplementedError
+    code: bytes
+    ty_args: List[TypeTag]
+    args: List[ScriptArgument]
+
+    def __init__(self, code: bytes, ty_args: List[TypeTag], args: List[ScriptArgument]):
+        self.code = code
+        self.ty_args = ty_args
+        self.args = args
 
     def deserialize(deserializer: Deserializer) -> Script:
-        raise NotImplementedError
+        code = deserializer.to_bytes()
+        ty_args = deserializer.sequence(TypeTag.deserialize)
+        args = deserializer.sequence(ScriptArgument.deserialize)
+        return Script(code, ty_args, args)
 
     def serialize(self, serializer: Serializer):
-        raise NotImplementedError
+        serializer.to_bytes(self.code)
+        serializer.sequence(self.ty_args, Serializer.struct)
+        serializer.sequence(self.args, Serializer.struct)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Script):
+            return NotImplemented
+        return (
+            self.code == other.code
+            and self.ty_args == other.ty_args
+            and self.args == other.args
+        )
+
+    def __str__(self):
+        return f"<{self.ty_args}>({self.args})"
+
+
+class ScriptArgument:
+    U8: int = 0
+    U64: int = 1
+    U128: int = 2
+    ADDRESS: int = 3
+    U8_VECTOR: int = 4
+    BOOL: int = 5
+
+    variant: int
+    value: typing.Any
+
+    def __init__(self, variant: int, value: typing.Any):
+        if variant < 0 or variant > 5:
+            raise Exception("Invalid variant")
+
+        self.variant = variant
+        self.value = value
+
+    @staticmethod
+    def deserialize(deserializer: Deserializer) -> ScriptArgument:
+        variant = deserializer.u8()
+        if variant == ScriptArgument.U8:
+            value = deserializer.u8()
+        elif variant == ScriptArgument.U64:
+            value = deserializer.u64()
+        elif variant == ScriptArgument.U128:
+            value = deserializer.u128()
+        elif variant == ScriptArgument.ADDRESS:
+            value = AccountAddress.deserialize(deserializer)
+        elif variant == ScriptArgument.U8_VECTOR:
+            value = deserializer.to_bytes()
+        elif variant == ScriptArgument.BOOL:
+            value = deserializer.bool()
+        else:
+            raise Exception("Invalid variant")
+        return ScriptArgument(variant, value)
+
+    def serialize(self, serializer: Serializer):
+        serializer.u8(self.variant)
+        if self.variant == ScriptArgument.U8:
+            serializer.u8(self.value)
+        elif self.variant == ScriptArgument.U64:
+            serializer.u64(self.value)
+        elif self.variant == ScriptArgument.U128:
+            serializer.u128(self.value)
+        elif self.variant == ScriptArgument.ADDRESS:
+            serializer.struct(self.value)
+        elif self.variant == ScriptArgument.U8_VECTOR:
+            serializer.to_bytes(self.value)
+        elif self.variant == ScriptArgument.BOOL:
+            serializer.bool(self.value)
+        else:
+            raise Exception("Invalid variant")
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ScriptArgument):
+            return NotImplemented
+        return self.variant == other.variant and self.value == other.value
+
+    def __str__(self):
+        return f"[{self.variant}] {self.value}"
 
 
 class EntryFunction:
@@ -231,7 +325,10 @@ class EntryFunction:
         self.ty_args = ty_args
         self.args = args
 
-    def __eq__(self, other: EntryFunction) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, EntryFunction):
+            return NotImplemented
+
         return (
             self.module == other.module
             and self.function == other.function
@@ -242,6 +339,7 @@ class EntryFunction:
     def __str__(self):
         return f"{self.module}::{self.function}::<{self.ty_args}>({self.args})"
 
+    @staticmethod
     def natural(
         module: str,
         function: str,
@@ -255,18 +353,19 @@ class EntryFunction:
             byte_args.append(arg.encode())
         return EntryFunction(module_id, function, ty_args, byte_args)
 
+    @staticmethod
     def deserialize(deserializer: Deserializer) -> EntryFunction:
-        module = ModuleId.deserialize(deserializer)
+        module = ModuleId.deserialize
         function = deserializer.str()
         ty_args = deserializer.sequence(TypeTag.deserialize)
-        args = deserializer.sequence(Deserializer.bytes)
+        args = deserializer.sequence(Deserializer.to_bytes)
         return EntryFunction(module, function, ty_args, args)
 
     def serialize(self, serializer: Serializer):
         self.module.serialize(serializer)
         serializer.str(self.function)
         serializer.sequence(self.ty_args, Serializer.struct)
-        serializer.sequence(self.args, Serializer.bytes)
+        serializer.sequence(self.args, Serializer.to_bytes)
 
 
 class ModuleId:
@@ -277,16 +376,20 @@ class ModuleId:
         self.address = address
         self.name = name
 
-    def __eq__(self, other: ModuleId) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ModuleId):
+            return NotImplemented
         return self.address == other.address and self.name == other.name
 
     def __str__(self) -> str:
         return f"{self.address}::{self.name}"
 
+    @staticmethod
     def from_str(module_id: str) -> ModuleId:
         split = module_id.split("::")
         return ModuleId(AccountAddress.from_hex(split[0]), split[1])
 
+    @staticmethod
     def deserialize(deserializer: Deserializer) -> ModuleId:
         addr = AccountAddress.deserialize(deserializer)
         name = deserializer.str()
@@ -323,7 +426,9 @@ class SignedTransaction:
         self.transaction = transaction
         self.authenticator = authenticator
 
-    def __eq__(self, other: SignedTransaction) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SignedTransaction):
+            return NotImplemented
         return (
             self.transaction == other.transaction
             and self.authenticator == other.authenticator
@@ -347,6 +452,7 @@ class SignedTransaction:
             keyed = self.transaction.keyed()
         return self.authenticator.verify(keyed)
 
+    @staticmethod
     def deserialize(deserializer: Deserializer) -> SignedTransaction:
         transaction = RawTransaction.deserialize(deserializer)
         authenticator = Authenticator.deserialize(deserializer)
@@ -582,14 +688,14 @@ class Test(unittest.TestCase):
         # Verify the RawTransaction
         self.assertEqual(raw_transaction_input, raw_transaction_generated_bytes)
         raw_transaction = RawTransaction.deserialize(
-            Deserializer(bytes.fromhex(raw_transaction_input))
+            Deserializer(bytes.fromhex(str(raw_transaction_input)))
         )
         self.assertEqual(raw_transaction_generated, raw_transaction)
 
         # Verify the SignedTransaction
         self.assertEqual(signed_transaction_input, signed_transaction_generated_bytes)
         signed_transaction = SignedTransaction.deserialize(
-            Deserializer(bytes.fromhex(signed_transaction_input))
+            Deserializer(bytes.fromhex(str(signed_transaction_input)))
         )
 
         self.assertEqual(signed_transaction.transaction, raw_transaction)

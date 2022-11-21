@@ -1,15 +1,15 @@
 ---
-title: "Using Aptos CLI"
+title: "Use CLI for Configuration"
 id: "use-aptos-cli"
 ---
 
-# Using Aptos CLI
+# Use Aptos CLI for Configuration
 
 The `aptos` tool is a command line interface (CLI) for developing on the Aptos blockchain, debugging, and for node operations. This document describes how to use the `aptos` CLI tool. To install the CLI, see [Install Aptos CLI](install-aptos-cli).
 
 ## Command line help
 
-Command line help is available.  Type `aptos help` or `aptos --help` to see the available command options. See below the usage output from `aptos --help`: 
+Command line help is available.  Type `aptos help` or `aptos --help` to see the available command options. See below the usage output from `aptos --help`:
 
 ```bash
 USAGE:
@@ -85,16 +85,16 @@ OPTIONS:
 
         --named-addresses <NAMED_ADDRESSES>
             Named addresses for the move binary
-            
+
             Example: alice=0x1234, bob=0x5678
-            
+
             Note: This will fail if there are duplicates in the Move.toml file remove those first.
-            
+
             [default: ]
 
         --output-dir <OUTPUT_DIR>
             Path to save the compiled move package
-            
+
             Defaults to `<package_dir>/build`
 
         --package-dir <PACKAGE_DIR>
@@ -130,8 +130,8 @@ Configuration for the CLI works like this:
 
 ### In the current working directory for local runs
 
-1. Your configurations are in a **local** YAML configuration file `.aptos/config.yaml`, i.e., located in the current working directory where you run the CLI. In this case you must run your CLI commands from this current working directory for this configuration to be used. 
-2. You can verify that the CLI is set to use this local configuration YAML file by running the command: 
+1. Your configurations are in a **local** YAML configuration file `.aptos/config.yaml`, i.e., located in the current working directory where you run the CLI. In this case you must run your CLI commands from this current working directory for this configuration to be used.
+2. You can verify that the CLI is set to use this local configuration YAML file by running the command:
 
   ```bash
   aptos config show-global-config
@@ -242,7 +242,7 @@ Aptos is now set up for account 18B61497FD290B02BB0751F44381CADA1657C2B3AA6194A0
 
 ### Fund an account with the faucet
 
-You can fund an account with the faucet via the CLI by using either an account address or with `default` (which defaults to the account address created with `aptos init`). 
+You can fund an account with the faucet via the CLI by using either an account address or with `default` (which defaults to the account address created with `aptos init`).
 
 For example, to fund the account `00f1f20ddd0b0dd2291b6e42c97274668c479bca70f07c6b6a80b99720779696` that was created above with the `aptos init` command:
 
@@ -262,7 +262,7 @@ $ aptos account fund-with-faucet --account default
 
 ### View an account's balance and transfer events
 
-You can view the balance and transfer events (deposits and withdrawals) either by explicity specying the accound address, as below:
+You can view the balance and transfer events (deposits and withdrawals) either by explicitly specifying the account address, as below:
 
 ```bash
 $ aptos account list --query balance --account 00f1f20ddd0b0dd2291b6e42c97274668c479bca70f07c6b6a80b99720779696
@@ -391,7 +391,7 @@ Both the above commands will generate the following resource list information on
 
 You can also list the default profile from configuration with no account specified.
 
-:::tip 
+:::tip
 Account addresses may differ from example to example in this section.
 :::
 
@@ -504,7 +504,7 @@ $ aptos account list --query resources --account superuser
 You can pass different types of queries to view different items under an account. Currently, 'resources' and
 'modules' are supported but more query types are coming. For example, to fetch modules:
 ```bash
-$ aptos account list --query modules                   
+$ aptos account list --query modules
 {
   "Result": [
     {
@@ -806,6 +806,14 @@ Operand Stack:
 
 In this example, we'll use the `HelloBlockchain` in [move-examples](https://github.com/aptos-labs/aptos-core/tree/main/aptos-move/move-examples).
 
+:::important
+As an open source project, the source code as well as compiled code published to the Aptos blockchain is inherently open by default. This means code you upload may be downloaded from on-chain data. Even without source access, it is possible to regenerate Move source from Move bytecode. To disable source access, publish with the `--included-artifacts none` argument, like so:
+
+```
+aptos move publish --included-artifacts none
+```
+:::
+
 Publish the package with your account address set for `HelloBlockchain`.
 
 Here, you need to change 8946741e5c907c43c9e042b3739993f32904723f8e2d1491564d38959b59ac71 to your account address.
@@ -819,7 +827,7 @@ $ aptos move publish --package-dir aptos-move/move-examples/hello_blockchain/ --
 ```
 
 :::tip
-When publishing Move modules, if multiple modules are in one package, then all the modules in this package must have the same account. If they have different accounts, then the publishing will fail at the transaction level. 
+When publishing Move modules, if multiple modules are in one package, then all the modules in this package must have the same account. If they have different accounts, then the publishing will fail at the transaction level.
 :::
 
 ### Running a Move function
@@ -903,7 +911,7 @@ $ aptos move run --function-id 0xb9bd2cfa58ca29bce1d7add25fce5c62220604cd0236fe3
     "version": 3488,
     "vm_status": "Executed successfully"
   }
-} 
+}
 ```
 
 Additionally, profiles can replace addresses in the function id.
@@ -1086,7 +1094,7 @@ The framework will be stored within the `aptos-framework-release` directory.
 
 The `ValidatorConfiguration` file contains:
 
-* `account_address`: The account that manages this validator. This must be derived from the `account_key` provided within te `ValidatorConfiguration` file.
+* `account_address`: The account that manages this validator. This must be derived from the `account_key` provided within the `ValidatorConfiguration` file.
 * `consensus_key`: The public key for authenticating consensus messages from the validator
 * `account_key`: The public key for the account that manages this validator. This is used to derive the `account_address`.
 * `network_key`: The public key for both validator and fullnode network authentication and encryption.

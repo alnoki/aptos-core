@@ -6,12 +6,13 @@ use crate::{
     CliResult,
 };
 use aptos_build_info::build_information;
-use aptos_crypto::HashValue;
 use aptos_logger::{debug, Level};
+use aptos_rest_client::aptos_api_types::HashValue;
 use aptos_rest_client::{Account, Client};
+use aptos_telemetry::service::telemetry_is_disabled;
 use aptos_types::{chain_id::ChainId, transaction::authenticator::AuthenticationKey};
 use itertools::Itertools;
-use move_deps::move_core_types::account_address::AccountAddress;
+use move_core_types::account_address::AccountAddress;
 use reqwest::Url;
 use serde::Serialize;
 #[cfg(unix)]
@@ -63,12 +64,17 @@ pub async fn to_common_result<T: Serialize>(
 ) -> CliResult {
     let latency = start_time.elapsed();
     let is_err = result.is_err();
-    let error = if let Err(ref error) = result {
-        Some(error.to_string())
-    } else {
-        None
-    };
-    send_telemetry_event(command, latency, !is_err, error).await;
+
+    if !telemetry_is_disabled() {
+        let error = if let Err(ref error) = result {
+            // Only print the error type
+            Some(error.to_str())
+        } else {
+            None
+        };
+        send_telemetry_event(command, latency, !is_err, error).await;
+    }
+
     let result: ResultWrapper<T> = result.into();
     let string = serde_json::to_string_pretty(&result).unwrap();
     if is_err {
@@ -87,7 +93,7 @@ async fn send_telemetry_event(
     command: &str,
     latency: Duration,
     success: bool,
-    error: Option<String>,
+    error: Option<&str>,
 ) {
     // Collect the build information
     let build_information = cli_build_information();
@@ -323,6 +329,7 @@ pub async fn fund_account(
             "{}mint?amount={}&auth_key={}",
             faucet_url, num_octas, address
         ))
+        .body("{}")
         .send()
         .await
         .map_err(|err| CliError::ApiError(err.to_string()))?;
@@ -342,10 +349,6 @@ pub async fn fund_account(
 
 pub fn start_logger() {
     let mut logger = aptos_logger::Logger::new();
-    logger
-        .channel_size(1000)
-        .is_async(false)
-        .level(Level::Warn)
-        .read_env();
+    logger.channel_size(1000).is_async(false).level(Level::Warn);
     logger.build();
 }

@@ -20,7 +20,7 @@ use crate::{
             extract_epoch_to_proposers, AptosDBBackend, LeaderReputation,
             ProposerAndVoterHeuristic, ReputationHeuristic,
         },
-        proposal_generator::ProposalGenerator,
+        proposal_generator::{ChainHealthBackoffConfig, ProposalGenerator},
         proposer_election::ProposerElection,
         rotating_proposer_election::{choose_leader, RotatingProposer},
         round_proposer_election::RoundProposer,
@@ -34,6 +34,7 @@ use crate::{
     payload_manager::QuorumStoreClient,
     persistent_liveness_storage::{LedgerRecoveryData, PersistentLivenessStorage, RecoveryData},
     quorum_store::direct_mempool_quorum_store::DirectMempoolQuorumStore,
+    recovery_manager::RecoveryManager,
     round_manager::{RoundManager, UnverifiedEvent, VerifiedEvent},
     state_replication::StateComputer,
     util::time_service::TimeService,
@@ -89,17 +90,8 @@ const PROPSER_ROUND_BEHIND_STORAGE_BUFFER: usize = 10;
 
 #[allow(clippy::large_enum_variant)]
 pub enum LivenessStorageData {
-    RecoveryData(RecoveryData),
-    LedgerRecoveryData(LedgerRecoveryData),
-}
-
-impl LivenessStorageData {
-    pub fn expect_recovery_data(self, msg: &str) -> RecoveryData {
-        match self {
-            LivenessStorageData::RecoveryData(data) => data,
-            LivenessStorageData::LedgerRecoveryData(_) => panic!("{}", msg),
-        }
-    }
+    FullRecoveryData(RecoveryData),
+    PartialRecoveryData(LedgerRecoveryData),
 }
 
 // Manager the components that shared across epoch and spawn per-epoch RoundManager with
@@ -218,7 +210,8 @@ impl EpochManager {
                     weight_by_voting_power,
                     use_history_from_previous_epoch_max_count,
                 ) = match &leader_reputation_type {
-                    LeaderReputationType::ProposerAndVoter(proposer_and_voter_config) => {
+                    LeaderReputationType::ProposerAndVoter(proposer_and_voter_config)
+                    | LeaderReputationType::ProposerAndVoterV2(proposer_and_voter_config) => {
                         let proposer_window_size = proposers.len()
                             * proposer_and_voter_config.proposer_window_num_validators_multiplier;
                         let voter_window_size = proposers.len()
@@ -232,6 +225,7 @@ impl EpochManager {
                                 proposer_and_voter_config.failure_threshold_percent,
                                 voter_window_size,
                                 proposer_window_size,
+                                leader_reputation_type.use_reputation_window_from_stale_end(),
                             ));
                         (
                             heuristic,
@@ -301,6 +295,8 @@ impl EpochManager {
                     backend,
                     heuristic,
                     onchain_config.leader_reputation_exclude_round(),
+                    leader_reputation_type.use_root_hash_for_seed(),
+                    self.config.window_for_chain_health,
                 ));
                 // LeaderReputation is not cheap, so we can cache the amount of rounds round_manager needs.
                 Box::new(CachedProposerElection::new(
@@ -454,7 +450,7 @@ impl EpochManager {
                     "process_block_retrieval",
                     block_store.process_block_retrieval(request).await
                 ) {
-                    error!(epoch = epoch, error = ?e, kind = error_kind(&e));
+                    warn!(epoch = epoch, error = ?e, kind = error_kind(&e));
                 }
             }
             info!(epoch = epoch, "Block retrieval task stops");
@@ -542,6 +538,35 @@ impl EpochManager {
         self.block_retrieval_tx = None;
     }
 
+    async fn start_recovery_manager(
+        &mut self,
+        ledger_data: LedgerRecoveryData,
+        epoch_state: EpochState,
+    ) {
+        let network_sender = NetworkSender::new(
+            self.author,
+            self.network_sender.clone(),
+            self.self_sender.clone(),
+            epoch_state.verifier.clone(),
+        );
+        let (recovery_manager_tx, recovery_manager_rx) = aptos_channel::new(
+            QueueStyle::LIFO,
+            1,
+            Some(&counters::ROUND_MANAGER_CHANNEL_MSGS),
+        );
+        self.round_manager_tx = Some(recovery_manager_tx);
+        let (close_tx, close_rx) = oneshot::channel();
+        self.round_manager_close_tx = Some(close_tx);
+        let recovery_manager = RecoveryManager::new(
+            epoch_state,
+            network_sender,
+            self.storage.clone(),
+            self.commit_state_computer.clone(),
+            ledger_data.committed_round(),
+        );
+        tokio::spawn(recovery_manager.start(recovery_manager_rx, close_rx));
+    }
+
     async fn start_round_manager(
         &mut self,
         recovery_data: RecoveryData,
@@ -583,7 +608,8 @@ impl EpochManager {
             self.self_sender.clone(),
             epoch_state.verifier.clone(),
         );
-
+        let chain_health_backoff_config =
+            ChainHealthBackoffConfig::new(self.config.chain_health_backoff.clone());
         let safety_rules_container = Arc::new(Mutex::new(safety_rules));
 
         let (consensus_to_quorum_store_sender, consensus_to_quorum_store_receiver) =
@@ -625,9 +651,10 @@ impl EpochManager {
             block_store.clone(),
             Arc::new(payload_manager),
             self.time_service.clone(),
-            self.config.max_block_txns,
-            self.config.max_block_bytes,
+            self.config.max_sending_block_txns,
+            self.config.max_sending_block_bytes,
             onchain_config.max_failed_authors_to_store(),
+            chain_health_backoff_config,
         );
 
         let (round_manager_tx, round_manager_rx) = aptos_channel::new(
@@ -639,6 +666,12 @@ impl EpochManager {
         self.round_manager_tx = Some(round_manager_tx.clone());
 
         counters::TOTAL_VOTING_POWER.set(epoch_state.verifier.total_voting_power() as f64);
+        counters::VALIDATOR_VOTING_POWER.set(
+            epoch_state
+                .verifier
+                .get_voting_power(&self.author)
+                .unwrap_or(0) as f64,
+        );
 
         let mut round_manager = RoundManager::new(
             epoch_state,
@@ -649,10 +682,9 @@ impl EpochManager {
             safety_rules_container,
             network_sender,
             self.storage.clone(),
-            self.config.sync_only,
             onchain_config,
             round_manager_tx,
-            self.config.round_initial_timeout_ms,
+            self.config.clone(),
         );
 
         round_manager.init(last_vote).await;
@@ -680,16 +712,19 @@ impl EpochManager {
 
         self.epoch_state = Some(epoch_state.clone());
 
-        let initial_data = self
-            .storage
-            .start()
-            .expect_recovery_data("consensusdb is not consistent with aptosdb");
-        self.start_round_manager(
-            initial_data,
-            epoch_state,
-            onchain_config.unwrap_or_default(),
-        )
-        .await;
+        match self.storage.start() {
+            LivenessStorageData::FullRecoveryData(initial_data) => {
+                self.start_round_manager(
+                    initial_data,
+                    epoch_state,
+                    onchain_config.unwrap_or_default(),
+                )
+                .await
+            }
+            LivenessStorageData::PartialRecoveryData(ledger_data) => {
+                self.start_recovery_manager(ledger_data, epoch_state).await
+            }
+        }
     }
 
     async fn process_message(

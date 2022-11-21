@@ -24,7 +24,12 @@ use aptos_crypto::{
 };
 use aptos_keygen::KeyGen;
 use aptos_logger::prelude::*;
-use aptos_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
+use aptos_types::{
+    chain_id::ChainId,
+    on_chain_config::{GasScheduleV2, OnChainConsensusConfig},
+    transaction::Transaction,
+    waypoint::Waypoint,
+};
 use framework::ReleaseBundle;
 use rand::Rng;
 use serde::{de::DeserializeOwned, Serialize};
@@ -36,6 +41,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use vm_genesis::default_gas_schedule;
 
 const VALIDATOR_IDENTITY: &str = "validator-identity.yaml";
 const VFN_IDENTITY: &str = "vfn-identity.yaml";
@@ -189,20 +195,20 @@ impl TryFrom<&ValidatorNodeConfig> for ValidatorConfiguration {
                 .try_into()?,
         );
         Ok(ValidatorConfiguration {
-            owner_account_address: private_identity.account_address,
+            owner_account_address: private_identity.account_address.into(),
             owner_account_public_key: private_identity.account_private_key.public_key(),
-            operator_account_address: private_identity.account_address,
+            operator_account_address: private_identity.account_address.into(),
             operator_account_public_key: private_identity.account_private_key.public_key(),
-            voter_account_address: private_identity.account_address,
+            voter_account_address: private_identity.account_address.into(),
             voter_account_public_key: private_identity.account_private_key.public_key(),
-            consensus_public_key: private_identity.consensus_private_key.public_key(),
-            proof_of_possession: bls12381::ProofOfPossession::create(
+            consensus_public_key: Some(private_identity.consensus_private_key.public_key()),
+            proof_of_possession: Some(bls12381::ProofOfPossession::create(
                 &private_identity.consensus_private_key,
+            )),
+            validator_network_public_key: Some(
+                private_identity.validator_network_private_key.public_key(),
             ),
-            validator_network_public_key: private_identity
-                .validator_network_private_key
-                .public_key(),
-            validator_host,
+            validator_host: Some(validator_host),
             full_node_network_public_key: Some(
                 private_identity.full_node_network_private_key.public_key(),
             ),
@@ -399,6 +405,10 @@ pub struct GenesisConfiguration {
     pub rewards_apy_percentage: u64,
     pub voting_duration_secs: u64,
     pub voting_power_increase_limit: u64,
+    pub employee_vesting_start: Option<u64>,
+    pub employee_vesting_period_duration: Option<u64>,
+    pub consensus_config: OnChainConsensusConfig,
+    pub gas_schedule: GasScheduleV2,
 }
 
 pub type InitConfigFn = Arc<dyn Fn(usize, &mut NodeConfig, &mut u64) + Send + Sync>;
@@ -594,6 +604,10 @@ impl Builder {
             rewards_apy_percentage: 10,
             voting_duration_secs: ONE_DAY / 24,
             voting_power_increase_limit: 50,
+            employee_vesting_start: None,
+            employee_vesting_period_duration: None,
+            consensus_config: OnChainConsensusConfig::default(),
+            gas_schedule: default_gas_schedule(),
         };
         if let Some(init_genesis_config) = &self.init_genesis_config {
             (init_genesis_config)(&mut genesis_config);

@@ -10,8 +10,8 @@ use crate::{
 use anyhow::Result;
 use aptos_crypto::HashValue;
 use aptos_infallible::Mutex;
-use aptos_types::aggregate_signature::AggregateSignature;
 use aptos_types::{
+    aggregate_signature::AggregateSignature,
     epoch_change::EpochChangeProof,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     on_chain_config::ValidatorSet,
@@ -118,16 +118,19 @@ impl MockStorage {
             .map(|(_, v)| v)
             .collect();
         blocks.sort_by_key(Block::round);
+        let last_vote = self.shared_storage.last_vote.lock().clone();
+        let qc = self
+            .shared_storage
+            .highest_2chain_timeout_certificate
+            .lock()
+            .clone();
         RecoveryData::new(
-            self.shared_storage.last_vote.lock().clone(),
+            last_vote,
             ledger_recovery_data,
             blocks,
             RootMetadata::new_empty(),
             quorum_certs,
-            self.shared_storage
-                .highest_2chain_timeout_certificate
-                .lock()
-                .clone(),
+            qc,
         )
     }
 
@@ -139,9 +142,10 @@ impl MockStorage {
         let shared_storage = Arc::new(MockSharedStorage::new(validator_set.clone()));
         let genesis_li = LedgerInfo::mock_genesis(Some(validator_set));
         let storage = Self::new_with_ledger_info(shared_storage, genesis_li);
-        let recovery_data = storage
-            .start()
-            .expect_recovery_data("Mock storage should never fail constructing recovery data");
+        let recovery_data = match storage.start() {
+            LivenessStorageData::FullRecoveryData(recovery_data) => recovery_data,
+            _ => panic!("Mock storage should never fail constructing recovery data"),
+        };
 
         (recovery_data, Arc::new(storage))
     }
@@ -153,17 +157,20 @@ impl PersistentLivenessStorage for MockStorage {
         // When the shared storage is empty, we are expected to not able to construct an block tree
         // from it. During test we will intentionally clear shared_storage to simulate the situation
         // of restarting from an empty consensusDB
+        // info!("step 1.3.4.2.3.1");
         let should_check_for_consistency = !(self.shared_storage.block.lock().is_empty()
             && self.shared_storage.qc.lock().is_empty());
         for block in blocks {
             self.shared_storage.block.lock().insert(block.id(), block);
         }
+        // info!("step 1.3.4.2.3.2");
         for qc in quorum_certs {
             self.shared_storage
                 .qc
                 .lock()
                 .insert(qc.certified_block().id(), qc);
         }
+        // info!("step 1.3.4.2.3.3");
         if should_check_for_consistency {
             if let Err(e) = self.verify_consistency() {
                 panic!("invalid db after save tree: {}", e);
@@ -197,8 +204,8 @@ impl PersistentLivenessStorage for MockStorage {
 
     fn start(&self) -> LivenessStorageData {
         match self.try_start() {
-            Ok(recovery_data) => LivenessStorageData::RecoveryData(recovery_data),
-            Err(_) => LivenessStorageData::LedgerRecoveryData(self.recover_from_ledger()),
+            Ok(recovery_data) => LivenessStorageData::FullRecoveryData(recovery_data),
+            Err(_) => LivenessStorageData::PartialRecoveryData(self.recover_from_ledger()),
         }
     }
 
@@ -239,9 +246,10 @@ impl EmptyStorage {
 
     pub fn start_for_testing() -> (RecoveryData, Arc<Self>) {
         let storage = Arc::new(EmptyStorage::new());
-        let recovery_data = storage
-            .start()
-            .expect_recovery_data("Empty storage should never fail constructing recovery data");
+        let recovery_data = match storage.start() {
+            LivenessStorageData::FullRecoveryData(recovery_data) => recovery_data,
+            _ => panic!("Mock storage should never fail constructing recovery data"),
+        };
         (recovery_data, storage)
     }
 }
@@ -275,7 +283,7 @@ impl PersistentLivenessStorage for EmptyStorage {
             vec![],
             None,
         ) {
-            Ok(recovery_data) => LivenessStorageData::RecoveryData(recovery_data),
+            Ok(recovery_data) => LivenessStorageData::FullRecoveryData(recovery_data),
             Err(e) => {
                 eprintln!("{}", e);
                 panic!("Construct recovery data during genesis should never fail");
