@@ -16,7 +16,6 @@ from common import FAUCET_URL, NODE_URL
 wait_for_user = True
 
 if __name__ == "__main__":
-
     rest_client = RestClient(NODE_URL)
     faucet_client = FaucetClient(FAUCET_URL, rest_client)
 
