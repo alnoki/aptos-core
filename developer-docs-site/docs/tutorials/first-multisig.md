@@ -354,10 +354,10 @@ As a result, there is a significant amount of overhead required to implement a b
 
 To expedite this process, the Python SDK thus provides the Aptos Multisig Execution Expeditor (AMEE), a command-line tool that facilitates general multisig workflows through straightforward data structures and function calls.
 
-To use AMEE, navigate to the Python SDK package directory:
+To use AMEE, navigate to the Python SDK directory:
 
 ```zsh
-cd <aptos-core-parent-directory>/aptos-core/ecosystem/python/sdk/aptos_sdk
+cd <aptos-core-parent-directory>/aptos-core/ecosystem/python/sdk
 ```
 
 Then call up the help menu from the command line:
@@ -379,14 +379,14 @@ positional arguments:
     rotate (r)          Authentication key rotation operations.
     script (s)          Move script invocation.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
 ```
 
-AMEE offers a rich collection of useful subcommands, and to access their all of their help menus recursively simply call the `multisig.sh` shell script file with the `menus` argument (still from inside the `aptos_sdk` directory):
+AMEE offers a rich collection of useful subcommands, and to access their all of their help menus recursively, simply call the `multisig.sh` shell script file with the `menus` argument (still from inside the `sdk` directory):
 
 ```zsh title=Command
-sh ../examples/multisig.sh menus
+sh examples/multisig.sh menus
 ```
 
 :::tip
@@ -454,10 +454,10 @@ Keyfile now at the_aptos_foundation.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "The Aptos Foundation",
-    "public_key": "0x7d1bed984fd185595059f94cbe95ed3e4ce9b49bd3c53bace8102813cfdc4adc",
-    "authentication_key": "0x682b1a757af92532d184aab6d6ca7fa92b8229c38118c1729187ed1fb2106b15",
-    "encrypted_private_key": "0x674141414141426a377157643961486e544875424b4e43546831586454654855376956734656465039335a336266544f4f4d7157785354544a5671387932364d69494c364f724e44447143766871626b35564b36306e4362726a33566356536330636965524d5f777656466c5a394273314f78714151384c6d352d764b6666344443716978365a35397a4a65",
-    "salt": "0x5e323ba1f941152c38be4b05a04e24dd"
+    "public_key": "0x8b10b1b680e0e8734e58fe8466625fd7edff62a2cbbb9d83ddee2a593360b922",
+    "authentication_key": "0x0e8b6be1755cd65e50ebd3300a18287ab2e96af1fbd4298f49b66ee2a8c5ac06",
+    "encrypted_private_key": "0x674141414141426b474f6238743031312d53574874454e397370497a752d6f7470363675434647414f4c6669566e49597739426449676d655f7941732d79637a34332d5a526a4f754e3478547253434c595f45574245457a76466d62584a515143783762374a34726f374c62735f307861326d45734541637254462d714f38336d72656f7051484168713478",
+    "salt": "0x3a66e3df50e32c9b43115c016afbef70"
 }
 ```
 
@@ -470,7 +470,7 @@ This keyfile can be decrypted using the password to produce an unprotected accou
 ```zsh title=Output
 Enter password for encrypted private key:
 New account store at the_aptos_foundation.account_store:
-{"account_address": "0x682b1a757af92532d184aab6d6ca7fa92b8229c38118c1729187ed1fb2106b15", "private_key": "0x4ae3985bd49571cf67b42a391d72956a95cfb9aa634fd05c019a96a6eccd399d"}
+{"account_address": "0x0e8b6be1755cd65e50ebd3300a18287ab2e96af1fbd4298f49b66ee2a8c5ac06", "private_key": "0x55fde61334143fa6dcbbab9ce1367bc82fb46d75c32be8989a31e548594c50ce"}
 ```
 
 Similarly, AMEE can generate keyfiles from an unprotected account store format. Note here the abbreviation of `generate` to `g` and the optional `outfile` positional argument:
@@ -490,10 +490,10 @@ Keyfile now at from_store.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "The Aptos Foundation",
-    "public_key": "0x7d1bed984fd185595059f94cbe95ed3e4ce9b49bd3c53bace8102813cfdc4adc",
-    "authentication_key": "0x682b1a757af92532d184aab6d6ca7fa92b8229c38118c1729187ed1fb2106b15",
-    "encrypted_private_key": "0x674141414141426a3771576861794330645a4949575051494f4f5a45647847426b5659723638506a464d666a5768486549357375437834696747514b6373466a683741732d78616e4958426e326a717066683071376c486c76364159646761765a514e2d715669664a50776e7a6c655f4436546d57762d426e3471765f5f6e45664e737530336f7a7a75702d",
-    "salt": "0x0656247cc0c7d571058a9b9ad7d6858b"
+    "public_key": "0x8b10b1b680e0e8734e58fe8466625fd7edff62a2cbbb9d83ddee2a593360b922",
+    "authentication_key": "0x0e8b6be1755cd65e50ebd3300a18287ab2e96af1fbd4298f49b66ee2a8c5ac06",
+    "encrypted_private_key": "0x674141414141426b474f636a3275633358474e5f333676346978584945634a3661793647706c354472716e7574465f63435f69384b67504e6a4f74724c3238356f416b5732526d3438546c634742416c796e64554767556a62656d4a6d6479656d35484d33555f696867476b6873656b587458566230377173436c436535344c474145667045446743415053",
+    "salt": "0x601841caf964c95f730d90751f9550a9"
 }
 ```
 
@@ -512,10 +512,10 @@ Keyfile now at from_store.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "The Aptos Foundation",
-    "public_key": "0x7d1bed984fd185595059f94cbe95ed3e4ce9b49bd3c53bace8102813cfdc4adc",
-    "authentication_key": "0x682b1a757af92532d184aab6d6ca7fa92b8229c38118c1729187ed1fb2106b15",
-    "encrypted_private_key": "0x674141414141426a3771576c48575570445a56707149732d6153785773753630696a656565315a5f684f365469696f523276705946565f2d7077556c49466c3656625468303731486c3654744a456e6575693443596d417065454f4f687435435a316f4b55444762536c43584b5067534e466664455135615f414a614270757a4637445a5554555870533149",
-    "salt": "0xd831bcda8cfac7b94a2065c7c829eac3"
+    "public_key": "0x8b10b1b680e0e8734e58fe8466625fd7edff62a2cbbb9d83ddee2a593360b922",
+    "authentication_key": "0x0e8b6be1755cd65e50ebd3300a18287ab2e96af1fbd4298f49b66ee2a8c5ac06",
+    "encrypted_private_key": "0x674141414141426b474f632d3842546c4b75476d543853486a4355465333744871365f4964383570446d4b523276703563397867305734765a496579736e5739363835413068316857795f744d4c6e545248475a6b4c69535a4d435f7145616b5576504a6c4847616172676f7477734d5231614637564c39623345493439774d39755a67363955743675746a",
+    "salt": "0xe8ef8643f5bc714f7ade7bd6798e04a4"
 }
 ```
 
@@ -528,14 +528,14 @@ Now verify the new password:
 ```zsh title=Output
 Enter password for encrypted private key:
 Keyfile password verified for The Aptos Foundation
-Public key:         0x7d1bed984fd185595059f94cbe95ed3e4ce9b49bd3c53bace8102813cfdc4adc
-Authentication key: 0x682b1a757af92532d184aab6d6ca7fa92b8229c38118c1729187ed1fb2106b15
+Public key:         0x8b10b1b680e0e8734e58fe8466625fd7edff62a2cbbb9d83ddee2a593360b922
+Authentication key: 0x0e8b6be1755cd65e50ebd3300a18287ab2e96af1fbd4298f49b66ee2a8c5ac06
 ```
 
 Note that all of these commands can be run in a scripted fashion simply by calling the `multisig.sh` shell script with the `keyfiles` argument.
 
 ```zsh title=Command
-sh ../examples/multisig.sh keyfiles
+sh examples/multisig.sh keyfiles
 ```
 
 :::tip
@@ -556,7 +556,7 @@ The below demo script, also in `multisig.sh`, demonstrates assorted metafile ope
 | `metafile remove`      | Remove a signatory or signatories, outputting a new metafile     |
 
 ```zsh title=Command
-sh ../examples/multisig.sh keyfiles
+sh examples/multisig.sh metafiles
 ```
 
 The first part of the demo generates a vanity account for both Ace and Bee, via the `--vanity-prefix` argument, which mines an account having a matching authentication key prefix. Note also the use of the `--use-test-password` command to reduce password inputs for the demo process:
@@ -577,10 +577,10 @@ Keyfile now at ace.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Ace",
-    "public_key": "0x198fed1db594fc9df0b926cef3a17471e394b627506a2bba37e71c7b7186898a",
-    "authentication_key": "0xace34c150c214397f17f3374bb9bca9d56ae9ad80c5cc26e5e3104ba2e72132a",
-    "encrypted_private_key": "0x674141414141426a37753267476d4e49386b636d6577514b3172355f356c6c49426b545861715859667268646e343137337a4d524d52454f487a4766725078686d576834346b6344754231455338525a6d344b36692d684941376c7346326c7a33364a6f4a6b3472315f62564d424e54483062354737675275476d5a41315a6d33773044376863536a4c424b",
-    "salt": "0x0248e25cfe88b9f00bfb1948df6791f9"
+    "public_key": "0x7fdb582d1d36ebddb0f6bd3f34abda788f8dc75beb5028f2ccf00044d970540d",
+    "authentication_key": "0xace4edf64e9db130f9bf3b38fdaa9e3a4d0a63f748ef87552f77e6dd860465c7",
+    "encrypted_private_key": "0x674141414141426b474f6539334d356c6444694475725645764a71354f44412d6746685450416f4472634d386d6156725547664d333269495379616773496635675274794664524335627546494f4e637567727858594974614d4e4c4e65724f617052472d45576f5374797a7144516a7542675467474541554f45794d6b75756631656156376b4e5349572d",
+    "salt": "0x01dbce2e058247bfd1cb6f5b2a24074b"
 }
 
 
@@ -593,10 +593,10 @@ Keyfile now at bee.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Bee",
-    "public_key": "0x7bf9cbad4386d95c239f0b2b186a3b970e0c9bd0914eaaec00756abf5ea675e6",
-    "authentication_key": "0xbeea9f7d3365f1c95348b803297081458eb77babc4c059518e3453b398653349",
-    "encrypted_private_key": "0x674141414141426a377532674659654e366c34566e77457077705065626566583167697a66434c635138496e594875334b70586c37437034566f4d6d686943376937483255366c314f5a46674d4e5a6c3852442d7267796d4c345376443444645249572d4a497353796d2d78743451355a5f6a376e4a546e554e4277483978626a6f59515346755f73373750",
-    "salt": "0x16312e818976ccf60dae4006f0161c12"
+    "public_key": "0x11434bffb4366cd39d49a04998d7d6cfb9d821c72ed78ead1134d4709f054278",
+    "authentication_key": "0xbee4336547dc92c70b02841426fe9ec59ad9de3e5866686b9e9967151ae1d2c8",
+    "encrypted_private_key": "0x674141414141426b474f652d31743633747265797975364e45704b476771665562386d694639584e7764576b316f4e596b4343785f395634636a55782d3950684d4354394b61323156457038674e612d714d5578594566746c36797a48584a5259467843556944513679674c4176746168747a71314b7553336f53784476304332424f72345a4b545652705a",
+    "salt": "0xd502e9251c85d469616b30d77c6dc557"
 }
 
 ```
@@ -618,18 +618,18 @@ Multisig metafile now at ace_and_bee.multisig:
     "address": null,
     "threshold": 1,
     "n_signatories": 2,
-    "public_key": "0x198fed1db594fc9df0b926cef3a17471e394b627506a2bba37e71c7b7186898a7bf9cbad4386d95c239f0b2b186a3b970e0c9bd0914eaaec00756abf5ea675e601",
-    "authentication_key": "0x9e6413fac20e0d493c78b6a7744d71c8ad772796e7dcd3f78bf5d647d6a31afe",
+    "public_key": "0x7fdb582d1d36ebddb0f6bd3f34abda788f8dc75beb5028f2ccf00044d970540d11434bffb4366cd39d49a04998d7d6cfb9d821c72ed78ead1134d4709f05427801",
+    "authentication_key": "0xe7dc07203970203cdb2ebd3db3dc520c73281fc70a396c1e7b594addc0828840",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0x198fed1db594fc9df0b926cef3a17471e394b627506a2bba37e71c7b7186898a",
-            "authentication_key": "0xace34c150c214397f17f3374bb9bca9d56ae9ad80c5cc26e5e3104ba2e72132a"
+            "public_key": "0x7fdb582d1d36ebddb0f6bd3f34abda788f8dc75beb5028f2ccf00044d970540d",
+            "authentication_key": "0xace4edf64e9db130f9bf3b38fdaa9e3a4d0a63f748ef87552f77e6dd860465c7"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x7bf9cbad4386d95c239f0b2b186a3b970e0c9bd0914eaaec00756abf5ea675e6",
-            "authentication_key": "0xbeea9f7d3365f1c95348b803297081458eb77babc4c059518e3453b398653349"
+            "public_key": "0x11434bffb4366cd39d49a04998d7d6cfb9d821c72ed78ead1134d4709f054278",
+            "authentication_key": "0xbee4336547dc92c70b02841426fe9ec59ad9de3e5866686b9e9967151ae1d2c8"
         }
     ]
 }
@@ -652,18 +652,18 @@ Multisig metafile now at ace_and_bee_increased.multisig:
     "address": null,
     "threshold": 2,
     "n_signatories": 2,
-    "public_key": "0x198fed1db594fc9df0b926cef3a17471e394b627506a2bba37e71c7b7186898a7bf9cbad4386d95c239f0b2b186a3b970e0c9bd0914eaaec00756abf5ea675e602",
-    "authentication_key": "0x7a66bb589973c243e91251bdf26e43b47b7e0297e713ab48428d0b489b9618f8",
+    "public_key": "0x7fdb582d1d36ebddb0f6bd3f34abda788f8dc75beb5028f2ccf00044d970540d11434bffb4366cd39d49a04998d7d6cfb9d821c72ed78ead1134d4709f05427802",
+    "authentication_key": "0xd56a906e88170c2566236467c7dfd34341efd1f436300e0b77f2cface20d65f3",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0x198fed1db594fc9df0b926cef3a17471e394b627506a2bba37e71c7b7186898a",
-            "authentication_key": "0xace34c150c214397f17f3374bb9bca9d56ae9ad80c5cc26e5e3104ba2e72132a"
+            "public_key": "0x7fdb582d1d36ebddb0f6bd3f34abda788f8dc75beb5028f2ccf00044d970540d",
+            "authentication_key": "0xace4edf64e9db130f9bf3b38fdaa9e3a4d0a63f748ef87552f77e6dd860465c7"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x7bf9cbad4386d95c239f0b2b186a3b970e0c9bd0914eaaec00756abf5ea675e6",
-            "authentication_key": "0xbeea9f7d3365f1c95348b803297081458eb77babc4c059518e3453b398653349"
+            "public_key": "0x11434bffb4366cd39d49a04998d7d6cfb9d821c72ed78ead1134d4709f054278",
+            "authentication_key": "0xbee4336547dc92c70b02841426fe9ec59ad9de3e5866686b9e9967151ae1d2c8"
         }
     ]
 }
@@ -685,10 +685,10 @@ Keyfile now at cad.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Cad",
-    "public_key": "0x774ffbf31e70681a795a61d5c8e47fa05e5088925ffa27d7eeb8e16d8bd1d5bb",
-    "authentication_key": "0xcad97c90570bdecf8737d3317604291f6c4cdd6f4651924c79eded5c9c4d0da7",
-    "encrypted_private_key": "0x674141414141426a37753269346d665469474f3873507459687531424470516831675a6b4c4541595936444f4b42694e567a444f346a38457764536955745144424a7a7454535f594777425764373238414d527a43455f39444270727a767a4d70676c544236665141574141674a4d777a4c32543056357453474b34724765395254536a7a33456774656434",
-    "salt": "0xdef251c71a113c7ddbbafc2881f297ed"
+    "public_key": "0xa6f3b47f68ceb96c1934568413dcf2044d5bd5a5e443817cfff15a478bf5df36",
+    "authentication_key": "0xcad363212d405dd6029706271d7e8f5de1556b0be020a64df6b9453f5a9d297f",
+    "encrypted_private_key": "0x674141414141426b474f66756f76703959396358325965326b5f74706b6c6b30776e7166774a4e505a3954384768336273746654676b4a39777a6d315775746553315832325157525a586c32736c66524f4b546268726454777a6c73584b7258374d546d5a4854766345507037794c476e5458504b335744436f3749626c70655235583032694f77792d6b46",
+    "salt": "0xbad21fa2de923ecdb071799329496703"
 }
 
 
@@ -701,10 +701,10 @@ Keyfile now at dee.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Dee",
-    "public_key": "0x159481f2929ba902f4640815ca27662843e2090438ea0db630e4addb150741a7",
-    "authentication_key": "0xdeee312ec51d2f30f4291fa3105d907237b2550afcb9e608192f1b44af5cd747",
-    "encrypted_private_key": "0x674141414141426a377532695a416d6335623373304a4c456165784a44655955414830456f5a78737a6e704165677072356d474332435467756c675a70343566372d32704b716e314d3744737456326375716133502d4a7647363758773152686270656a583033746775515758564f4e326c744361486c56345a4c4f466b7878556b55356b4b536e47636764",
-    "salt": "0x027b97dac9ab2f60f847e51dd71ddf35"
+    "public_key": "0xb3988b79feb04eae7264389617f958e2e73069fbcaba912f4a1c630261481dc8",
+    "authentication_key": "0xdeeda0b7894cbc6fdf14fc9310907fb3ba3f9f670b714960286040b50a5d4dc4",
+    "encrypted_private_key": "0x674141414141426b474f6675734e6f4d34705f59586c526139715454705279333455746b343052502d7231557a4c4b343562744470707159436956574b4d3076334650396662707331685a4847645571553067584856696c6b445162524e684257566a64494d6537356164663337706f464437565f70523846707063316d4e4a48684a516639574252474f48",
+    "salt": "0xcac1fc0024c95e9d3637b9b5ed090b19"
 }
 
 ```
@@ -716,7 +716,6 @@ Now Cad and Dee are appended to the first multisig metafile via `metafile append
 ```
 
 ```zsh title=Output
-
 === Append Cad and Dee to 3-of-4 multisig ===
 
 
@@ -727,28 +726,28 @@ Multisig metafile now at cad_and_dee_added.multisig:
     "address": null,
     "threshold": 3,
     "n_signatories": 4,
-    "public_key": "0x198fed1db594fc9df0b926cef3a17471e394b627506a2bba37e71c7b7186898a7bf9cbad4386d95c239f0b2b186a3b970e0c9bd0914eaaec00756abf5ea675e6774ffbf31e70681a795a61d5c8e47fa05e5088925ffa27d7eeb8e16d8bd1d5bb159481f2929ba902f4640815ca27662843e2090438ea0db630e4addb150741a703",
-    "authentication_key": "0x2fc0693aed20883859cb9a03e25c31943267d91d6062992e56c251496d793ec9",
+    "public_key": "0x7fdb582d1d36ebddb0f6bd3f34abda788f8dc75beb5028f2ccf00044d970540d11434bffb4366cd39d49a04998d7d6cfb9d821c72ed78ead1134d4709f054278a6f3b47f68ceb96c1934568413dcf2044d5bd5a5e443817cfff15a478bf5df36b3988b79feb04eae7264389617f958e2e73069fbcaba912f4a1c630261481dc803",
+    "authentication_key": "0x60e4a2ed780e6735b4c5851db670cca7ee11a1e263bc62e70044c403c412b064",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0x198fed1db594fc9df0b926cef3a17471e394b627506a2bba37e71c7b7186898a",
-            "authentication_key": "0xace34c150c214397f17f3374bb9bca9d56ae9ad80c5cc26e5e3104ba2e72132a"
+            "public_key": "0x7fdb582d1d36ebddb0f6bd3f34abda788f8dc75beb5028f2ccf00044d970540d",
+            "authentication_key": "0xace4edf64e9db130f9bf3b38fdaa9e3a4d0a63f748ef87552f77e6dd860465c7"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x7bf9cbad4386d95c239f0b2b186a3b970e0c9bd0914eaaec00756abf5ea675e6",
-            "authentication_key": "0xbeea9f7d3365f1c95348b803297081458eb77babc4c059518e3453b398653349"
+            "public_key": "0x11434bffb4366cd39d49a04998d7d6cfb9d821c72ed78ead1134d4709f054278",
+            "authentication_key": "0xbee4336547dc92c70b02841426fe9ec59ad9de3e5866686b9e9967151ae1d2c8"
         },
         {
             "signatory": "Cad",
-            "public_key": "0x774ffbf31e70681a795a61d5c8e47fa05e5088925ffa27d7eeb8e16d8bd1d5bb",
-            "authentication_key": "0xcad97c90570bdecf8737d3317604291f6c4cdd6f4651924c79eded5c9c4d0da7"
+            "public_key": "0xa6f3b47f68ceb96c1934568413dcf2044d5bd5a5e443817cfff15a478bf5df36",
+            "authentication_key": "0xcad363212d405dd6029706271d7e8f5de1556b0be020a64df6b9453f5a9d297f"
         },
         {
             "signatory": "Dee",
-            "public_key": "0x159481f2929ba902f4640815ca27662843e2090438ea0db630e4addb150741a7",
-            "authentication_key": "0xdeee312ec51d2f30f4291fa3105d907237b2550afcb9e608192f1b44af5cd747"
+            "public_key": "0xb3988b79feb04eae7264389617f958e2e73069fbcaba912f4a1c630261481dc8",
+            "authentication_key": "0xdeeda0b7894cbc6fdf14fc9310907fb3ba3f9f670b714960286040b50a5d4dc4"
         }
     ]
 }
@@ -762,7 +761,6 @@ Finally, Ace and Dee are removed from the resultant multisig via `metafile remov
 ```
 
 ```zsh title=Output
-
 === Remove Ace and Dee for 1-of-2 multisig ===
 
 
@@ -773,18 +771,18 @@ Multisig metafile now at ace_and_dee_removed.multisig:
     "address": null,
     "threshold": 1,
     "n_signatories": 2,
-    "public_key": "0x7bf9cbad4386d95c239f0b2b186a3b970e0c9bd0914eaaec00756abf5ea675e6774ffbf31e70681a795a61d5c8e47fa05e5088925ffa27d7eeb8e16d8bd1d5bb01",
-    "authentication_key": "0xeef31014c0e711722bf1b652188d0829d71d27aa05cfe25e31bdc38a0ebc5ffd",
+    "public_key": "0x11434bffb4366cd39d49a04998d7d6cfb9d821c72ed78ead1134d4709f054278a6f3b47f68ceb96c1934568413dcf2044d5bd5a5e443817cfff15a478bf5df3601",
+    "authentication_key": "0x30967fd887c25c9e98f2bac3ac0eec2046b060f627c9660af0dac585c1c5dcd8",
     "signatories": [
         {
             "signatory": "Bee",
-            "public_key": "0x7bf9cbad4386d95c239f0b2b186a3b970e0c9bd0914eaaec00756abf5ea675e6",
-            "authentication_key": "0xbeea9f7d3365f1c95348b803297081458eb77babc4c059518e3453b398653349"
+            "public_key": "0x11434bffb4366cd39d49a04998d7d6cfb9d821c72ed78ead1134d4709f054278",
+            "authentication_key": "0xbee4336547dc92c70b02841426fe9ec59ad9de3e5866686b9e9967151ae1d2c8"
         },
         {
             "signatory": "Cad",
-            "public_key": "0x774ffbf31e70681a795a61d5c8e47fa05e5088925ffa27d7eeb8e16d8bd1d5bb",
-            "authentication_key": "0xcad97c90570bdecf8737d3317604291f6c4cdd6f4651924c79eded5c9c4d0da7"
+            "public_key": "0xa6f3b47f68ceb96c1934568413dcf2044d5bd5a5e443817cfff15a478bf5df36",
+            "authentication_key": "0xcad363212d405dd6029706271d7e8f5de1556b0be020a64df6b9453f5a9d297f"
         }
     ]
 }
@@ -816,7 +814,7 @@ Make sure devnet is live when you try running the examples!
 :::
 
 ```zsh title=Command
-sh ../examples/multisig.sh rotate
+sh examples/multisig.sh rotate
 ```
 
 First, generate a vanity account for Ace and Bee, funding Ace since his account will need to pay for authentication key rotation transactions:
@@ -840,10 +838,10 @@ Keyfile now at ace.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Ace",
-    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-    "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-    "encrypted_private_key": "0x674141414141426a37762d5074594a4e397066647776426b59666a7043616a52736a51516f785279496359356e41336a646a6d4852652d5657534a5f554b4c774e4e716a713976416d7334423941526858493763614865444c735039685f47484a3530717557374e6e4e31794c6364625a347436747a4b4b4858576d4a4c384e6b386b556779553279586565",
-    "salt": "0x3b98be7c51cfd4aa511d2e7050c714af"
+    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+    "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+    "encrypted_private_key": "0x674141414141426b474f684d3969526c525f3171475830466863472d556731766777612d4d4f5536764b43706c574b5441336853516731526a424b4f67364943514933473469724e5049497a5041463578723275325a664d774f6450733969414f7268564d54795347514c4944375064637779506a62512d625074626243554743327a696c64766b67796b43",
+    "salt": "0x406c12de7f5edc8e2ed001dab7549259"
 }
 
 
@@ -856,17 +854,17 @@ Keyfile now at bee.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Bee",
-    "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-    "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3",
-    "encrypted_private_key": "0x674141414141426a37762d515752725870697532417937533431445a495779357934625f38624a7948536761326c3433543944484967756e5978483259615369446f394331493969567a6f54475767395930614c4a49537a4d74574f5042466e6533375143587a73517a3843373848576a626b47715a59754a587742616b6d6367455f554d79726b46625242",
-    "salt": "0x6b659b567324ce0883483240bfa77241"
+    "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+    "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912",
+    "encrypted_private_key": "0x674141414141426b474f684e563976683642546d324258564776694230546443534362516f4f74676c744651574e6d554b324c5773754634627a5651582d78764b63574e66702d72646352726950395056324b6b417466765a5a77584743702d3078427833416e744c47594a45793964587964786178514f5332646c7379493442765f5353595f5445464b67",
+    "salt": "0xcb20c2620cee80744ca5bfa2e532938e"
 }
 
 
 === Fund Ace on devnet ===
 
 
-Running aptos CLI command: aptos account fund-with-faucet --account 0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a --faucet-url https://faucet.devnet.aptoslabs.com --url https://fullnode.devnet.aptoslabs.com/v1
+Running aptos CLI command: aptos account fund-with-faucet --account 0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39 --faucet-url https://faucet.devnet.aptoslabs.com --url https://fullnode.devnet.aptoslabs.com/v1
 New balance: 100000000
 ```
 
@@ -895,18 +893,18 @@ Multisig metafile now at initial.multisig:
     "address": null,
     "threshold": 1,
     "n_signatories": 2,
-    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
-    "authentication_key": "0x4256f6a9293fd19642a5042c99dc772cac5afe6f4c1f5727794feb5aa324ac77",
+    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
+    "authentication_key": "0xe6d1f9f6d4a4cc571b94b13a9a0e8e96e0673bd3a98bb28df6fdeb0068cd4982",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-            "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+            "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+            "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-            "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+            "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+            "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
         }
     ]
 }
@@ -919,14 +917,14 @@ Rotation proof challenge proposal now at initial.challenge_proposal:
 {
     "filetype": "Rotation proof challenge proposal",
     "description": "Initial",
-    "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
+    "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
     "from_is_single_signer": true,
     "to_is_single_signer": false,
     "sequence_number": 0,
-    "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-    "current_auth_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-    "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
-    "chain_id": 44,
+    "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+    "current_auth_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+    "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
+    "chain_id": 47,
     "expiry": "2030-01-01T00:00:00"
 }
 
@@ -942,22 +940,22 @@ Rotation proof challenge signature now at ace_initial.challenge_signature:
     "challenge_proposal": {
         "filetype": "Rotation proof challenge proposal",
         "description": "Initial",
-        "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
+        "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
         "from_is_single_signer": true,
         "to_is_single_signer": false,
         "sequence_number": 0,
-        "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-        "current_auth_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-        "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
-        "chain_id": 44,
+        "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+        "current_auth_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+        "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
+        "chain_id": 47,
         "expiry": "2030-01-01T00:00:00"
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-        "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+        "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+        "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
     },
-    "signature": "0x4e5fcde82936f9160c37234945e0dfb4ba8c4424242b4589e054136bcecc2c65f02f021fcd412a168825edd8d3ab69eb4dd2ccecba59328ffd6061af88a8af05"
+    "signature": "0x6b849a3f7151e3b5442c23ae59c4b0e2b960965e365e2d14535ddf6c02c9f69e9680cb458cea094beb6d61c072d02be94935e0a75abacff97cf0fa01632a3e06"
 }
 
 
@@ -965,27 +963,27 @@ Rotation proof challenge signature now at ace_initial.challenge_signature:
 
 
 Using test password.
-Transaction successful: 0xc4e0c3e2b3d3d2195cbc98c068b0619f5bb0020af8db1cac375eab5efce3b1a4
+Transaction successful: 0x97070240cae4ccad7b2fe90f6e69d9aa527a882bd1ed5dd0553f9a942cca5c01
 Updating address in multisig metafile.
 Multisig metafile now at initial.multisig:
 {
     "filetype": "Multisig metafile",
     "multisig_name": "Initial",
-    "address": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
+    "address": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
     "threshold": 1,
     "n_signatories": 2,
-    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
-    "authentication_key": "0x4256f6a9293fd19642a5042c99dc772cac5afe6f4c1f5727794feb5aa324ac77",
+    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
+    "authentication_key": "0xe6d1f9f6d4a4cc571b94b13a9a0e8e96e0673bd3a98bb28df6fdeb0068cd4982",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-            "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+            "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+            "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-            "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+            "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+            "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
         }
     ]
 }
@@ -1017,18 +1015,18 @@ Multisig metafile now at increased.multisig:
     "address": null,
     "threshold": 2,
     "n_signatories": 2,
-    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
-    "authentication_key": "0x3894d1a4d7b3a59e6b86c4fff71d6531315199fdb873f87a5b9fe30cf3b50315",
+    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
+    "authentication_key": "0x77bb183beceb174bd645eac6370d0dd37e4fba80b60d7f70f071ac4c5ac95839",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-            "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+            "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+            "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-            "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+            "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+            "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
         }
     ]
 }
@@ -1041,14 +1039,14 @@ Rotation proof challenge proposal now at increase.challenge_proposal:
 {
     "filetype": "Rotation proof challenge proposal",
     "description": "Increase",
-    "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
+    "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
     "from_is_single_signer": false,
     "to_is_single_signer": false,
     "sequence_number": 1,
-    "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-    "current_auth_key": "0x4256f6a9293fd19642a5042c99dc772cac5afe6f4c1f5727794feb5aa324ac77",
-    "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
-    "chain_id": 44,
+    "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+    "current_auth_key": "0xe6d1f9f6d4a4cc571b94b13a9a0e8e96e0673bd3a98bb28df6fdeb0068cd4982",
+    "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
+    "chain_id": 47,
     "expiry": "2030-01-01T00:00:00"
 }
 
@@ -1064,22 +1062,22 @@ Rotation proof challenge signature now at ace_increase.challenge_signature:
     "challenge_proposal": {
         "filetype": "Rotation proof challenge proposal",
         "description": "Increase",
-        "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
+        "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
         "from_is_single_signer": false,
         "to_is_single_signer": false,
         "sequence_number": 1,
-        "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-        "current_auth_key": "0x4256f6a9293fd19642a5042c99dc772cac5afe6f4c1f5727794feb5aa324ac77",
-        "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
-        "chain_id": 44,
+        "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+        "current_auth_key": "0xe6d1f9f6d4a4cc571b94b13a9a0e8e96e0673bd3a98bb28df6fdeb0068cd4982",
+        "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
+        "chain_id": 47,
         "expiry": "2030-01-01T00:00:00"
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-        "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+        "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+        "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
     },
-    "signature": "0x9e889c195507116c757336398e549d47216fa15612b4d36d06d3c7ad4107f87e7745a21874c8a7da2e78b299669170f574254731ace5dd2f7b9263d322f7d60e"
+    "signature": "0xb8e12eaa11bae54639723faa50c3d21afd88adf407b8d301d5a141bfe41146f236a7d3989987684d647999c04aa5aab38ec49b64373ffec7c89c939ff91aa801"
 }
 
 
@@ -1094,22 +1092,22 @@ Rotation proof challenge signature now at bee_increase.challenge_signature:
     "challenge_proposal": {
         "filetype": "Rotation proof challenge proposal",
         "description": "Increase",
-        "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
+        "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
         "from_is_single_signer": false,
         "to_is_single_signer": false,
         "sequence_number": 1,
-        "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-        "current_auth_key": "0x4256f6a9293fd19642a5042c99dc772cac5afe6f4c1f5727794feb5aa324ac77",
-        "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
-        "chain_id": 44,
+        "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+        "current_auth_key": "0xe6d1f9f6d4a4cc571b94b13a9a0e8e96e0673bd3a98bb28df6fdeb0068cd4982",
+        "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
+        "chain_id": 47,
         "expiry": "2030-01-01T00:00:00"
     },
     "signatory": {
         "signatory": "Bee",
-        "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-        "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+        "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+        "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
     },
-    "signature": "0xd8e2c539b8004979c4091ae0318e8c3441629133e3158d9de25a6c74bd6fba0c442757f4390f8f2207af23043604bb87c59c209db680e6186e0b848fcea46a0c"
+    "signature": "0xebc14833629362d64508f06b4a67bdf99fff3b753521c127d66e70a5de03d2f7c9bc204763963a3b78c0202949d800b55eff9bbdc5ac28138cd32b27accdbf0d"
 }
 ```
 
@@ -1137,42 +1135,42 @@ Rotation transaction proposal now at increase.rotation_transaction_proposal:
     "challenge_proposal": {
         "filetype": "Rotation proof challenge proposal",
         "description": "Increase",
-        "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
+        "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
         "from_is_single_signer": false,
         "to_is_single_signer": false,
         "sequence_number": 1,
-        "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-        "current_auth_key": "0x4256f6a9293fd19642a5042c99dc772cac5afe6f4c1f5727794feb5aa324ac77",
-        "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
-        "chain_id": 44,
+        "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+        "current_auth_key": "0xe6d1f9f6d4a4cc571b94b13a9a0e8e96e0673bd3a98bb28df6fdeb0068cd4982",
+        "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
+        "chain_id": 47,
         "expiry": "2030-01-01T00:00:00"
     },
     "challenge_from_signatures": [
         {
             "signatory": {
                 "signatory": "Ace",
-                "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
             },
-            "signature": "0x9e889c195507116c757336398e549d47216fa15612b4d36d06d3c7ad4107f87e7745a21874c8a7da2e78b299669170f574254731ace5dd2f7b9263d322f7d60e"
+            "signature": "0xb8e12eaa11bae54639723faa50c3d21afd88adf407b8d301d5a141bfe41146f236a7d3989987684d647999c04aa5aab38ec49b64373ffec7c89c939ff91aa801"
         }
     ],
     "challenge_to_signatures": [
         {
             "signatory": {
                 "signatory": "Ace",
-                "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
             },
-            "signature": "0x9e889c195507116c757336398e549d47216fa15612b4d36d06d3c7ad4107f87e7745a21874c8a7da2e78b299669170f574254731ace5dd2f7b9263d322f7d60e"
+            "signature": "0xb8e12eaa11bae54639723faa50c3d21afd88adf407b8d301d5a141bfe41146f236a7d3989987684d647999c04aa5aab38ec49b64373ffec7c89c939ff91aa801"
         },
         {
             "signatory": {
                 "signatory": "Bee",
-                "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-                "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+                "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+                "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
             },
-            "signature": "0xd8e2c539b8004979c4091ae0318e8c3441629133e3158d9de25a6c74bd6fba0c442757f4390f8f2207af23043604bb87c59c209db680e6186e0b848fcea46a0c"
+            "signature": "0xebc14833629362d64508f06b4a67bdf99fff3b753521c127d66e70a5de03d2f7c9bc204763963a3b78c0202949d800b55eff9bbdc5ac28138cd32b27accdbf0d"
         }
     ]
 }
@@ -1192,58 +1190,58 @@ Rotation transaction signature now at bee_increase.rotation_transaction_signatur
         "challenge_proposal": {
             "filetype": "Rotation proof challenge proposal",
             "description": "Increase",
-            "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
+            "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
             "from_is_single_signer": false,
             "to_is_single_signer": false,
             "sequence_number": 1,
-            "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-            "current_auth_key": "0x4256f6a9293fd19642a5042c99dc772cac5afe6f4c1f5727794feb5aa324ac77",
-            "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
-            "chain_id": 44,
+            "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+            "current_auth_key": "0xe6d1f9f6d4a4cc571b94b13a9a0e8e96e0673bd3a98bb28df6fdeb0068cd4982",
+            "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
+            "chain_id": 47,
             "expiry": "2030-01-01T00:00:00"
         },
         "challenge_from_signatures": [
             {
                 "signatory": {
                     "signatory": "Ace",
-                    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                    "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                    "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
                 },
-                "signature": "0x9e889c195507116c757336398e549d47216fa15612b4d36d06d3c7ad4107f87e7745a21874c8a7da2e78b299669170f574254731ace5dd2f7b9263d322f7d60e"
+                "signature": "0xb8e12eaa11bae54639723faa50c3d21afd88adf407b8d301d5a141bfe41146f236a7d3989987684d647999c04aa5aab38ec49b64373ffec7c89c939ff91aa801"
             }
         ],
         "challenge_to_signatures": [
             {
                 "signatory": {
                     "signatory": "Ace",
-                    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                    "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                    "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
                 },
-                "signature": "0x9e889c195507116c757336398e549d47216fa15612b4d36d06d3c7ad4107f87e7745a21874c8a7da2e78b299669170f574254731ace5dd2f7b9263d322f7d60e"
+                "signature": "0xb8e12eaa11bae54639723faa50c3d21afd88adf407b8d301d5a141bfe41146f236a7d3989987684d647999c04aa5aab38ec49b64373ffec7c89c939ff91aa801"
             },
             {
                 "signatory": {
                     "signatory": "Bee",
-                    "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-                    "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+                    "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+                    "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
                 },
-                "signature": "0xd8e2c539b8004979c4091ae0318e8c3441629133e3158d9de25a6c74bd6fba0c442757f4390f8f2207af23043604bb87c59c209db680e6186e0b848fcea46a0c"
+                "signature": "0xebc14833629362d64508f06b4a67bdf99fff3b753521c127d66e70a5de03d2f7c9bc204763963a3b78c0202949d800b55eff9bbdc5ac28138cd32b27accdbf0d"
             }
         ]
     },
     "signatory": {
         "signatory": "Bee",
-        "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-        "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+        "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+        "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
     },
-    "signature": "0xdd38f37d861d6bba653040e661295747744b3bfa952d266cb114114f68b2ae5b46af25483c20ec5a70f4774f6bb05d74be193d17970bf5e06e1282392e76070c"
+    "signature": "0xf9420a6a8504f9f77a55de4d4e4a2e44cf26aedb1ef0509b8ef95e5f26fe00ee0bbdfdb28f870baa98077214e816c6bd34a86611155d626b6c9f8979f45fb302"
 }
 
 
 === Submit rotation transaction ===
 
 
-Transaction successful: 0x6e4675bdd5b4873c2d26797b39d44e0244182d2d11a979212b4e3d3f570cd0e1
+Transaction successful: 0xe8799316d6aebe0ca66120a9ccb0eb9b51b659026805535aa37bea18254f6922
 Updating address in multisig metafile.
 Multisig metafile now at initial.multisig:
 {
@@ -1252,18 +1250,18 @@ Multisig metafile now at initial.multisig:
     "address": null,
     "threshold": 1,
     "n_signatories": 2,
-    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b01",
-    "authentication_key": "0x4256f6a9293fd19642a5042c99dc772cac5afe6f4c1f5727794feb5aa324ac77",
+    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8401",
+    "authentication_key": "0xe6d1f9f6d4a4cc571b94b13a9a0e8e96e0673bd3a98bb28df6fdeb0068cd4982",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-            "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+            "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+            "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-            "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+            "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+            "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
         }
     ]
 }
@@ -1272,21 +1270,21 @@ Multisig metafile now at increased.multisig:
 {
     "filetype": "Multisig metafile",
     "multisig_name": "Increased",
-    "address": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
+    "address": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
     "threshold": 2,
     "n_signatories": 2,
-    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
-    "authentication_key": "0x3894d1a4d7b3a59e6b86c4fff71d6531315199fdb873f87a5b9fe30cf3b50315",
+    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
+    "authentication_key": "0x77bb183beceb174bd645eac6370d0dd37e4fba80b60d7f70f071ac4c5ac95839",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-            "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+            "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+            "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-            "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+            "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+            "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
         }
     ]
 }
@@ -1310,18 +1308,19 @@ Here, Ace and Bee both need to sign the proposal since the account undergoing ro
 ```zsh
 === Propose rotation challenge for rotating back to Ace ===
 
+
 Rotation proof challenge proposal now at return.challenge_proposal:
 {
     "filetype": "Rotation proof challenge proposal",
     "description": "Return",
-    "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
+    "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
     "from_is_single_signer": false,
     "to_is_single_signer": true,
     "sequence_number": 2,
-    "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-    "current_auth_key": "0x3894d1a4d7b3a59e6b86c4fff71d6531315199fdb873f87a5b9fe30cf3b50315",
-    "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-    "chain_id": 44,
+    "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+    "current_auth_key": "0x77bb183beceb174bd645eac6370d0dd37e4fba80b60d7f70f071ac4c5ac95839",
+    "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+    "chain_id": 47,
     "expiry": "2030-01-01T00:00:00"
 }
 
@@ -1337,22 +1336,22 @@ Rotation proof challenge signature now at ace_return.challenge_signature:
     "challenge_proposal": {
         "filetype": "Rotation proof challenge proposal",
         "description": "Return",
-        "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
+        "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
         "from_is_single_signer": false,
         "to_is_single_signer": true,
         "sequence_number": 2,
-        "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-        "current_auth_key": "0x3894d1a4d7b3a59e6b86c4fff71d6531315199fdb873f87a5b9fe30cf3b50315",
-        "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-        "chain_id": 44,
+        "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+        "current_auth_key": "0x77bb183beceb174bd645eac6370d0dd37e4fba80b60d7f70f071ac4c5ac95839",
+        "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+        "chain_id": 47,
         "expiry": "2030-01-01T00:00:00"
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-        "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+        "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+        "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
     },
-    "signature": "0xdb3e1c896703eedcbad0854ccbf5d87287c61885ea7490ed1f70560f23f9faf7a3278f04cf01ed9714236ab7e4fd0637889691dea197520cb28d5da0fbc4f401"
+    "signature": "0x3603b39d1fabb753f88015bafdad8c0cc87668b32434d6c449d4b9b30506af0336ff565397d9ed73cbd4b2cfea339b2555cb8de66f36bf37298c179582553807"
 }
 
 
@@ -1367,22 +1366,22 @@ Rotation proof challenge signature now at bee_return.challenge_signature:
     "challenge_proposal": {
         "filetype": "Rotation proof challenge proposal",
         "description": "Return",
-        "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
+        "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
         "from_is_single_signer": false,
         "to_is_single_signer": true,
         "sequence_number": 2,
-        "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-        "current_auth_key": "0x3894d1a4d7b3a59e6b86c4fff71d6531315199fdb873f87a5b9fe30cf3b50315",
-        "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-        "chain_id": 44,
+        "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+        "current_auth_key": "0x77bb183beceb174bd645eac6370d0dd37e4fba80b60d7f70f071ac4c5ac95839",
+        "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+        "chain_id": 47,
         "expiry": "2030-01-01T00:00:00"
     },
     "signatory": {
         "signatory": "Bee",
-        "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-        "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+        "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+        "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
     },
-    "signature": "0xdbc73adcce8e942e11a5ae0d4f9db57ce7055a279b9a436d5ad98a458ace0f27fb95b52569b5b8f290a21e23bfbe3d6c2717217c92d1cdeeb2d7d68aed41660c"
+    "signature": "0x61f8e2ca2d7559ce99a15b9a7d3bebfd75469030eb34417cce4e451ec184b6582340974e284efad087b659782f80ba555ca1b98b0c4c81549309fce5e588ad05"
 }
 ```
 
@@ -1410,42 +1409,42 @@ Rotation transaction proposal now at return.rotation_transaction_proposal:
     "challenge_proposal": {
         "filetype": "Rotation proof challenge proposal",
         "description": "Return",
-        "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
+        "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
         "from_is_single_signer": false,
         "to_is_single_signer": true,
         "sequence_number": 2,
-        "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-        "current_auth_key": "0x3894d1a4d7b3a59e6b86c4fff71d6531315199fdb873f87a5b9fe30cf3b50315",
-        "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-        "chain_id": 44,
+        "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+        "current_auth_key": "0x77bb183beceb174bd645eac6370d0dd37e4fba80b60d7f70f071ac4c5ac95839",
+        "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+        "chain_id": 47,
         "expiry": "2030-01-01T00:00:00"
     },
     "challenge_from_signatures": [
         {
             "signatory": {
                 "signatory": "Ace",
-                "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
             },
-            "signature": "0xdb3e1c896703eedcbad0854ccbf5d87287c61885ea7490ed1f70560f23f9faf7a3278f04cf01ed9714236ab7e4fd0637889691dea197520cb28d5da0fbc4f401"
+            "signature": "0x3603b39d1fabb753f88015bafdad8c0cc87668b32434d6c449d4b9b30506af0336ff565397d9ed73cbd4b2cfea339b2555cb8de66f36bf37298c179582553807"
         },
         {
             "signatory": {
                 "signatory": "Bee",
-                "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-                "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+                "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+                "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
             },
-            "signature": "0xdbc73adcce8e942e11a5ae0d4f9db57ce7055a279b9a436d5ad98a458ace0f27fb95b52569b5b8f290a21e23bfbe3d6c2717217c92d1cdeeb2d7d68aed41660c"
+            "signature": "0x61f8e2ca2d7559ce99a15b9a7d3bebfd75469030eb34417cce4e451ec184b6582340974e284efad087b659782f80ba555ca1b98b0c4c81549309fce5e588ad05"
         }
     ],
     "challenge_to_signatures": [
         {
             "signatory": {
                 "signatory": "Ace",
-                "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
             },
-            "signature": "0xdb3e1c896703eedcbad0854ccbf5d87287c61885ea7490ed1f70560f23f9faf7a3278f04cf01ed9714236ab7e4fd0637889691dea197520cb28d5da0fbc4f401"
+            "signature": "0x3603b39d1fabb753f88015bafdad8c0cc87668b32434d6c449d4b9b30506af0336ff565397d9ed73cbd4b2cfea339b2555cb8de66f36bf37298c179582553807"
         }
     ]
 }
@@ -1465,51 +1464,51 @@ Rotation transaction signature now at ace_return.rotation_transaction_signature:
         "challenge_proposal": {
             "filetype": "Rotation proof challenge proposal",
             "description": "Return",
-            "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
+            "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
             "from_is_single_signer": false,
             "to_is_single_signer": true,
             "sequence_number": 2,
-            "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-            "current_auth_key": "0x3894d1a4d7b3a59e6b86c4fff71d6531315199fdb873f87a5b9fe30cf3b50315",
-            "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-            "chain_id": 44,
+            "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+            "current_auth_key": "0x77bb183beceb174bd645eac6370d0dd37e4fba80b60d7f70f071ac4c5ac95839",
+            "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+            "chain_id": 47,
             "expiry": "2030-01-01T00:00:00"
         },
         "challenge_from_signatures": [
             {
                 "signatory": {
                     "signatory": "Ace",
-                    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                    "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                    "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
                 },
-                "signature": "0xdb3e1c896703eedcbad0854ccbf5d87287c61885ea7490ed1f70560f23f9faf7a3278f04cf01ed9714236ab7e4fd0637889691dea197520cb28d5da0fbc4f401"
+                "signature": "0x3603b39d1fabb753f88015bafdad8c0cc87668b32434d6c449d4b9b30506af0336ff565397d9ed73cbd4b2cfea339b2555cb8de66f36bf37298c179582553807"
             },
             {
                 "signatory": {
                     "signatory": "Bee",
-                    "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-                    "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+                    "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+                    "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
                 },
-                "signature": "0xdbc73adcce8e942e11a5ae0d4f9db57ce7055a279b9a436d5ad98a458ace0f27fb95b52569b5b8f290a21e23bfbe3d6c2717217c92d1cdeeb2d7d68aed41660c"
+                "signature": "0x61f8e2ca2d7559ce99a15b9a7d3bebfd75469030eb34417cce4e451ec184b6582340974e284efad087b659782f80ba555ca1b98b0c4c81549309fce5e588ad05"
             }
         ],
         "challenge_to_signatures": [
             {
                 "signatory": {
                     "signatory": "Ace",
-                    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                    "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                    "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
                 },
-                "signature": "0xdb3e1c896703eedcbad0854ccbf5d87287c61885ea7490ed1f70560f23f9faf7a3278f04cf01ed9714236ab7e4fd0637889691dea197520cb28d5da0fbc4f401"
+                "signature": "0x3603b39d1fabb753f88015bafdad8c0cc87668b32434d6c449d4b9b30506af0336ff565397d9ed73cbd4b2cfea339b2555cb8de66f36bf37298c179582553807"
             }
         ]
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-        "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+        "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+        "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
     },
-    "signature": "0xc0fe90d7274bfc9b1bea0e941dbbf4a11e28eabbefdd61b95e2e43ae4e2083eefa08f64c69938be5d58c1701f7850f3a1b493a7bf486799aaeba520d95c7f80e"
+    "signature": "0xe83937397995a3ef0f2d6c75ae75f1e92fc7b1adb01a7e66a18fc6cf67dc547c2fda42812f7a8fcea61c23579e688a1a13ac51190a3f2a65e39e42626a21470c"
 }
 
 
@@ -1527,58 +1526,58 @@ Rotation transaction signature now at bee_return.rotation_transaction_signature:
         "challenge_proposal": {
             "filetype": "Rotation proof challenge proposal",
             "description": "Return",
-            "from_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
+            "from_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
             "from_is_single_signer": false,
             "to_is_single_signer": true,
             "sequence_number": 2,
-            "originator": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a",
-            "current_auth_key": "0x3894d1a4d7b3a59e6b86c4fff71d6531315199fdb873f87a5b9fe30cf3b50315",
-            "new_public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-            "chain_id": 44,
+            "originator": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39",
+            "current_auth_key": "0x77bb183beceb174bd645eac6370d0dd37e4fba80b60d7f70f071ac4c5ac95839",
+            "new_public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+            "chain_id": 47,
             "expiry": "2030-01-01T00:00:00"
         },
         "challenge_from_signatures": [
             {
                 "signatory": {
                     "signatory": "Ace",
-                    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                    "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                    "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
                 },
-                "signature": "0xdb3e1c896703eedcbad0854ccbf5d87287c61885ea7490ed1f70560f23f9faf7a3278f04cf01ed9714236ab7e4fd0637889691dea197520cb28d5da0fbc4f401"
+                "signature": "0x3603b39d1fabb753f88015bafdad8c0cc87668b32434d6c449d4b9b30506af0336ff565397d9ed73cbd4b2cfea339b2555cb8de66f36bf37298c179582553807"
             },
             {
                 "signatory": {
                     "signatory": "Bee",
-                    "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-                    "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+                    "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+                    "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
                 },
-                "signature": "0xdbc73adcce8e942e11a5ae0d4f9db57ce7055a279b9a436d5ad98a458ace0f27fb95b52569b5b8f290a21e23bfbe3d6c2717217c92d1cdeeb2d7d68aed41660c"
+                "signature": "0x61f8e2ca2d7559ce99a15b9a7d3bebfd75469030eb34417cce4e451ec184b6582340974e284efad087b659782f80ba555ca1b98b0c4c81549309fce5e588ad05"
             }
         ],
         "challenge_to_signatures": [
             {
                 "signatory": {
                     "signatory": "Ace",
-                    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-                    "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+                    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+                    "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
                 },
-                "signature": "0xdb3e1c896703eedcbad0854ccbf5d87287c61885ea7490ed1f70560f23f9faf7a3278f04cf01ed9714236ab7e4fd0637889691dea197520cb28d5da0fbc4f401"
+                "signature": "0x3603b39d1fabb753f88015bafdad8c0cc87668b32434d6c449d4b9b30506af0336ff565397d9ed73cbd4b2cfea339b2555cb8de66f36bf37298c179582553807"
             }
         ]
     },
     "signatory": {
         "signatory": "Bee",
-        "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-        "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+        "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+        "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
     },
-    "signature": "0xafec5c906b5800848f6bede2fc313cf2a7565d298d4fcb43c1bb31040a2e405ed7a0e2941ef0650d6efa30702f51b97a4c1e02b5584a4b1fc20d07136c28a70f"
+    "signature": "0xc43866daf8c1963822d24c36c4774353d1816bc89ac66aa2cb91a5bd0bbd8da4a990eb83d313de55a228e90bbf22dec43b6c7005ddfd2a94d99041a04cc1e607"
 }
 
 
 === Submit rotation transaction ===
 
 
-Transaction successful: 0x1c91d97ef2d9bfb9a09a0dbd1c34d272fa957d2468301d65e5e9d07068291373
+Transaction successful: 0x5d255734cb8c48d68c4b0686b0e672d0624ab43282361d036b3200db73364287
 Updating address in multisig metafile.
 Multisig metafile now at increased.multisig:
 {
@@ -1587,22 +1586,21 @@ Multisig metafile now at increased.multisig:
     "address": null,
     "threshold": 2,
     "n_signatories": 2,
-    "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf75bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b02",
-    "authentication_key": "0x3894d1a4d7b3a59e6b86c4fff71d6531315199fdb873f87a5b9fe30cf3b50315",
+    "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f836442603d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad8402",
+    "authentication_key": "0x77bb183beceb174bd645eac6370d0dd37e4fba80b60d7f70f071ac4c5ac95839",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0x6691a5a2bc421a3b3049614a30c506b1ce0ecbc2a780fb843bf5cfba2b386bf7",
-            "authentication_key": "0xace3e630afa569ce67bcb98de667d6a8323f02c4d5f77cead0cc41bedc172f1a"
+            "public_key": "0xddaf20b0c4bc71538087b70f3f346c39565abd2941c59a85a9bab212f8364426",
+            "authentication_key": "0xace97430e0b2cf78048fb6587603b15dbba6e240f526b0b2402409480f50cf39"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x5bb9f4793e76a2320aba7151706ff2ed79cb0a5a8254312dbdb15c042165e04b",
-            "authentication_key": "0xbeec0429e5e8afdd98d39fb5fbfcd608e438ea87d9d0dd1d5ba8fe23c2db21a3"
+            "public_key": "0x03d68f252ce02170971c4ce6e1a5691dd9da02ab1830166df23f4e36091bad84",
+            "authentication_key": "0xbee172929a9e4d9722064a802aca27895c314fd351cee9ffe198bbb45f400912"
         }
     ]
 }
-
 ```
 
 </details>
@@ -1634,7 +1632,7 @@ In this section AMEE will be used to [publish and upgrade the same `UpgradeAndGo
 | `script execute`             | Execute Move script invocation from proposal signature file(s)   |
 
 ```zsh title=Command
-sh ../examples/multisig.sh govern
+sh examples/multisig.sh govern
 ```
 
 As before, this example begins with a vanity account for both Ace and Bee:
@@ -1656,10 +1654,10 @@ Keyfile now at ace.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Ace",
-    "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-    "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe",
-    "encrypted_private_key": "0x674141414141426a394272644a6b4f7a66584d7a46764168397370784e6e694e3455634a51514b4b615159517034776941647a68675547684c76316f7a5045474958726635487444656f695859746a32646464487165446d69454a494a72424c4249306b58654e48384e5836342d42694c713642325769756772394946622d635a56563244694d456e504c66",
-    "salt": "0x8e1eab26663623afb580ddbc51df6827"
+    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+    "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b",
+    "encrypted_private_key": "0x674141414141426b474f71724b6a445a5a67577675316d68326250513557364c776c6533424d3245704e496472565a6675366d6d533339766c45595731527041684a5f663455624178534a6962703239304878626a426a5039596f36316e585f62454d552d66324d6e7161393130516e425a4150723030365046452d3648583651637538565f73327447564c",
+    "salt": "0xf61319b170261fa68c60ad9173c0a8a7"
 }
 
 
@@ -1672,10 +1670,10 @@ Keyfile now at bee.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Bee",
-    "public_key": "0xb1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e56",
-    "authentication_key": "0xbeec3b1787e9fcc0362fe28ea2c8c7e98b42ab9355e95fb440612d629756903b",
-    "encrypted_private_key": "0x674141414141426a3942726550316a324c757a456d556f35727248506e77466c58697a3041713742744c384b41567a4931654a384c586576504e5438654b347964394470374a665166384a675a5533566f5279436d596d61577a2d7a76786d356d4762682d6b50322d594e5832664642326e4456346e6b7a4c574f42467358424f78505848534f4d4e574345",
-    "salt": "0xdd3379cc341a5e32701cba37b48d2aa5"
+    "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
+    "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7",
+    "encrypted_private_key": "0x674141414141426b474f71735543475038776b33386971373041385675716f55646368573242414f72504135435f4863354c504d555f675878634e59675f45453264684e4333484879726c4a752d4e78746b2d7a7066754b467a3356635f737347506653706833625f744d397a6774526467626633726b6b736c7657307857425353646f66634349454f6162",
+    "salt": "0xaf71769634cb599b6a90c5b01c52e584"
 }
 ```
 
@@ -1706,18 +1704,18 @@ Multisig metafile now at protocol.multisig:
     "address": null,
     "threshold": 1,
     "n_signatories": 2,
-    "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4b1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e5601",
-    "authentication_key": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
+    "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-            "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+            "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
         },
         {
             "signatory": "Bee",
-            "public_key": "0xb1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e56",
-            "authentication_key": "0xbeec3b1787e9fcc0362fe28ea2c8c7e98b42ab9355e95fb440612d629756903b"
+            "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
+            "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
         }
     ]
 }
@@ -1726,28 +1724,28 @@ Multisig metafile now at protocol.multisig:
 === Fund multisig ===
 
 
-Running aptos CLI command: aptos account fund-with-faucet --account 0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e --faucet-url https://faucet.devnet.aptoslabs.com --url https://fullnode.devnet.aptoslabs.com/v1
+Running aptos CLI command: aptos account fund-with-faucet --account 0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81 --faucet-url https://faucet.devnet.aptoslabs.com --url https://fullnode.devnet.aptoslabs.com/v1
 New balance: 100000000
 Updating address in multisig metafile.
 Multisig metafile now at protocol.multisig:
 {
     "filetype": "Multisig metafile",
     "multisig_name": "Protocol",
-    "address": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+    "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
     "threshold": 1,
     "n_signatories": 2,
-    "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4b1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e5601",
-    "authentication_key": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
+    "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-            "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+            "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
         },
         {
             "signatory": "Bee",
-            "public_key": "0xb1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e56",
-            "authentication_key": "0xbeec3b1787e9fcc0362fe28ea2c8c7e98b42ab9355e95fb440612d629756903b"
+            "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
+            "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
         }
     ]
 }
@@ -1777,7 +1775,7 @@ Modules should be listed from the bottom of the dependency hierarchy up, with mo
 For this example, the `Move.toml` file in question is as follows:
 
 ```toml title="Move.toml"
-:!: static/move-examples/upgrade_and_govern/v1_0_0/Move.toml manifest
+:!: static/move-examples/upgrade_and_govern/genesis/Move.toml manifest
 ```
 
 Here, `Move.toml` contains the named address `upgrade_and_govern`, which is defined generically as `_`:
@@ -1798,37 +1796,34 @@ Publication proposal now at genesis.publication_proposal:
 {
     "filetype": "Publication proposal",
     "description": "Genesis",
-    "github_user": "alnoki",
+    "github_user": "aptos-labs",
     "github_project": "aptos-core",
-    "commit": "1c26076f5f",
-    "manifest_path": "aptos-move/move-examples/upgrade_and_govern/v1_0_0/Move.toml",
+    "commit": "965b6f5",
+    "manifest_path": "aptos-move/move-examples/upgrade_and_govern/genesis/Move.toml",
     "named_address": "upgrade_and_govern",
-    "module_sequence": [
-        "parameters"
-    ],
     "multisig": {
         "filetype": "Multisig metafile",
         "multisig_name": "Protocol",
-        "address": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+        "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
         "threshold": 1,
         "n_signatories": 2,
-        "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4b1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e5601",
-        "authentication_key": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
+        "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
         "signatories": [
             {
                 "signatory": "Ace",
-                "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-                "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+                "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+                "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
             },
             {
                 "signatory": "Bee",
-                "public_key": "0xb1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e56",
-                "authentication_key": "0xbeec3b1787e9fcc0362fe28ea2c8c7e98b42ab9355e95fb440612d629756903b"
+                "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
+                "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
             }
         ]
     },
     "sequence_number": 0,
-    "chain_id": 44,
+    "chain_id": 47,
     "expiry": "2030-12-31T00:00:00"
 }
 
@@ -1836,8 +1831,8 @@ Publication proposal now at genesis.publication_proposal:
 === Sign publication proposal ===
 
 
-Extracting https://github.com/alnoki/aptos-core/archive/1c26076f5f.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp4i9z7k4h.
-Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp4i9z7k4h/aptos-core-1c26076f5f29f3e554393df6f6fb4851422755b9/aptos-move/move-examples/upgrade_and_govern/v1_0_0 --named-addresses upgrade_and_govern=0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpzch0igs_.
+Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpzch0igs_/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/genesis --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
@@ -1852,60 +1847,57 @@ Publication signature now at genesis.publication_signature:
     "transaction_proposal": {
         "filetype": "Publication proposal",
         "description": "Genesis",
-        "github_user": "alnoki",
+        "github_user": "aptos-labs",
         "github_project": "aptos-core",
-        "commit": "1c26076f5f",
-        "manifest_path": "aptos-move/move-examples/upgrade_and_govern/v1_0_0/Move.toml",
+        "commit": "965b6f5",
+        "manifest_path": "aptos-move/move-examples/upgrade_and_govern/genesis/Move.toml",
         "named_address": "upgrade_and_govern",
-        "module_sequence": [
-            "parameters"
-        ],
         "multisig": {
             "filetype": "Multisig metafile",
             "multisig_name": "Protocol",
-            "address": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+            "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
             "threshold": 1,
             "n_signatories": 2,
-            "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4b1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e5601",
-            "authentication_key": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
+            "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
             "signatories": [
                 {
                     "signatory": "Ace",
-                    "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-                    "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+                    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+                    "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
                 },
                 {
                     "signatory": "Bee",
-                    "public_key": "0xb1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e56",
-                    "authentication_key": "0xbeec3b1787e9fcc0362fe28ea2c8c7e98b42ab9355e95fb440612d629756903b"
+                    "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
+                    "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
                 }
             ]
         },
         "sequence_number": 0,
-        "chain_id": 44,
+        "chain_id": 47,
         "expiry": "2030-12-31T00:00:00"
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-        "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+        "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
     },
-    "signature": "0xff4a53e80ea1ab58c33284df07a601bdd21082cf2106804a4176c351203b973c03b2530a1a0224fa415bddebfd7b576fe7bc294284a031f041cb37718fcda90c"
+    "signature": "0xb9c03c86c3169127653a9be01b0df109670b0707b25d9eec67b592de1cd40cd96182edd499c670f143b50131f0ad441519a9065d1ae4599872e8f03e8c780c0f"
 }
 
 
 === Execute publication ===
 
 
-Extracting https://github.com/alnoki/aptos-core/archive/1c26076f5f.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpi7mexcok.
-Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpi7mexcok/aptos-core-1c26076f5f29f3e554393df6f6fb4851422755b9/aptos-move/move-examples/upgrade_and_govern/v1_0_0 --named-addresses upgrade_and_govern=0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmplehxvhhr.
+Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmplehxvhhr/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/genesis --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
 INCLUDING DEPENDENCY AptosStdlib
 INCLUDING DEPENDENCY MoveStdlib
 BUILDING UpgradeAndGovern
-Transaction successful: 0x54a594684829b5c7d84c1b5756ac0b5bd62e5e35a6747cf617bc415a1be5104a
+Transaction successful: 0x0a90c76fbe97e4bdd32155ad0e54007de44628a6ef5b64254fcd9f138d0a2ab8
 ```
 
 </details>
@@ -1927,38 +1919,34 @@ Publication proposal now at upgrade.publication_proposal:
 {
     "filetype": "Publication proposal",
     "description": "Upgrade",
-    "github_user": "alnoki",
+    "github_user": "aptos-labs",
     "github_project": "aptos-core",
-    "commit": "1c26076f5f",
-    "manifest_path": "aptos-move/move-examples/upgrade_and_govern/v1_1_0/Move.toml",
+    "commit": "965b6f5",
+    "manifest_path": "aptos-move/move-examples/upgrade_and_govern/upgrade/Move.toml",
     "named_address": "upgrade_and_govern",
-    "module_sequence": [
-        "parameters",
-        "transfer"
-    ],
     "multisig": {
         "filetype": "Multisig metafile",
         "multisig_name": "Protocol",
-        "address": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+        "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
         "threshold": 1,
         "n_signatories": 2,
-        "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4b1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e5601",
-        "authentication_key": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
+        "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
         "signatories": [
             {
                 "signatory": "Ace",
-                "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-                "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+                "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+                "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
             },
             {
                 "signatory": "Bee",
-                "public_key": "0xb1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e56",
-                "authentication_key": "0xbeec3b1787e9fcc0362fe28ea2c8c7e98b42ab9355e95fb440612d629756903b"
+                "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
+                "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
             }
         ]
     },
     "sequence_number": 1,
-    "chain_id": 44,
+    "chain_id": 47,
     "expiry": "2030-12-31T00:00:00"
 }
 
@@ -1966,8 +1954,8 @@ Publication proposal now at upgrade.publication_proposal:
 === Sign upgrade proposal ===
 
 
-Extracting https://github.com/alnoki/aptos-core/archive/1c26076f5f.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmphpou29jf.
-Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmphpou29jf/aptos-core-1c26076f5f29f3e554393df6f6fb4851422755b9/aptos-move/move-examples/upgrade_and_govern/v1_1_0 --named-addresses upgrade_and_govern=0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpanhgyxta.
+Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpanhgyxta/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
@@ -1982,61 +1970,57 @@ Publication signature now at upgrade.publication_signature:
     "transaction_proposal": {
         "filetype": "Publication proposal",
         "description": "Upgrade",
-        "github_user": "alnoki",
+        "github_user": "aptos-labs",
         "github_project": "aptos-core",
-        "commit": "1c26076f5f",
-        "manifest_path": "aptos-move/move-examples/upgrade_and_govern/v1_1_0/Move.toml",
+        "commit": "965b6f5",
+        "manifest_path": "aptos-move/move-examples/upgrade_and_govern/upgrade/Move.toml",
         "named_address": "upgrade_and_govern",
-        "module_sequence": [
-            "parameters",
-            "transfer"
-        ],
         "multisig": {
             "filetype": "Multisig metafile",
             "multisig_name": "Protocol",
-            "address": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+            "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
             "threshold": 1,
             "n_signatories": 2,
-            "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4b1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e5601",
-            "authentication_key": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
+            "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
             "signatories": [
                 {
                     "signatory": "Ace",
-                    "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-                    "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+                    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+                    "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
                 },
                 {
                     "signatory": "Bee",
-                    "public_key": "0xb1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e56",
-                    "authentication_key": "0xbeec3b1787e9fcc0362fe28ea2c8c7e98b42ab9355e95fb440612d629756903b"
+                    "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
+                    "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
                 }
             ]
         },
         "sequence_number": 1,
-        "chain_id": 44,
+        "chain_id": 47,
         "expiry": "2030-12-31T00:00:00"
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-        "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+        "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
     },
-    "signature": "0x999fe7b09ea10268c0178b3b20c8d23b6d12cdb1c0b7886ba7bcee200dc83a0472fe77c7f802e0cd36061fbb3258c73133622f4528ed0f1d242b7272156d1306"
+    "signature": "0x43668cd0aa46ac42c71aaa5c1ee26e5b8afa26dd0db73fc0da5c32192de2d2c4cfcf9346201970d038f100be54862874bdbe369931651b436f1a7600a66ae60b"
 }
 
 
 === Execute upgrade ===
 
 
-Extracting https://github.com/alnoki/aptos-core/archive/1c26076f5f.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpf2_geeeq.
-Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpf2_geeeq/aptos-core-1c26076f5f29f3e554393df6f6fb4851422755b9/aptos-move/move-examples/upgrade_and_govern/v1_1_0 --named-addresses upgrade_and_govern=0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpqz3do3j6.
+Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpqz3do3j6/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
 INCLUDING DEPENDENCY AptosStdlib
 INCLUDING DEPENDENCY MoveStdlib
 BUILDING UpgradeAndGovern
-Transaction successful: 0x6aa9c7be0f42146d4c33257d7a82d913360b9f345d2247ee5ffb30ebeea81114
+Transaction successful: 0x6e742e4b86948bc06ed63940e3953343a286da843f194bccf67beeb4f4ff8960
 ```
 
 </details>
@@ -2044,7 +2028,7 @@ Transaction successful: 0x6aa9c7be0f42146d4c33257d7a82d913360b9f345d2247ee5ffb30
 Lastly, the `set_only.move` governance script is invoked from the multisig account:
 
 ```rust title=set_only.move
-:!: static/move-examples/upgrade_and_govern/v1_1_0/scripts/set_only.move script
+:!: static/move-examples/upgrade_and_govern/upgrade/scripts/set_only.move script
 ```
 
 Note here that the main function in this script, `set_only`, accepts only a `&signer` as an argument, with constants like `PARAMETER_1` and `PARAMETER_2` defined inside the script.
@@ -2068,35 +2052,35 @@ Script proposal now at invoke.script_proposal:
 {
     "filetype": "Script proposal",
     "description": "Invoke",
-    "github_user": "alnoki",
+    "github_user": "aptos-labs",
     "github_project": "aptos-core",
-    "commit": "1c26076f5f",
-    "manifest_path": "aptos-move/move-examples/upgrade_and_govern/v1_1_0/Move.toml",
+    "commit": "965b6f5",
+    "manifest_path": "aptos-move/move-examples/upgrade_and_govern/upgrade/Move.toml",
     "named_address": "upgrade_and_govern",
     "script_name": "set_only",
     "multisig": {
         "filetype": "Multisig metafile",
         "multisig_name": "Protocol",
-        "address": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+        "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
         "threshold": 1,
         "n_signatories": 2,
-        "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4b1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e5601",
-        "authentication_key": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
+        "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
         "signatories": [
             {
                 "signatory": "Ace",
-                "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-                "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+                "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+                "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
             },
             {
                 "signatory": "Bee",
-                "public_key": "0xb1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e56",
-                "authentication_key": "0xbeec3b1787e9fcc0362fe28ea2c8c7e98b42ab9355e95fb440612d629756903b"
+                "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
+                "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
             }
         ]
     },
     "sequence_number": 2,
-    "chain_id": 44,
+    "chain_id": 47,
     "expiry": "2030-12-31T00:00:00"
 }
 
@@ -2104,8 +2088,8 @@ Script proposal now at invoke.script_proposal:
 === Sign invocation proposal ===
 
 
-Extracting https://github.com/alnoki/aptos-core/archive/1c26076f5f.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp45hu664y.
-Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp45hu664y/aptos-core-1c26076f5f29f3e554393df6f6fb4851422755b9/aptos-move/move-examples/upgrade_and_govern/v1_1_0 --named-addresses upgrade_and_govern=0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpt4dw7zbc.
+Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpt4dw7zbc/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
@@ -2120,58 +2104,58 @@ Script signature now at invoke.script_signature:
     "transaction_proposal": {
         "filetype": "Script proposal",
         "description": "Invoke",
-        "github_user": "alnoki",
+        "github_user": "aptos-labs",
         "github_project": "aptos-core",
-        "commit": "1c26076f5f",
-        "manifest_path": "aptos-move/move-examples/upgrade_and_govern/v1_1_0/Move.toml",
+        "commit": "965b6f5",
+        "manifest_path": "aptos-move/move-examples/upgrade_and_govern/upgrade/Move.toml",
         "named_address": "upgrade_and_govern",
         "script_name": "set_only",
         "multisig": {
             "filetype": "Multisig metafile",
             "multisig_name": "Protocol",
-            "address": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+            "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
             "threshold": 1,
             "n_signatories": 2,
-            "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4b1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e5601",
-            "authentication_key": "0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e",
+            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
+            "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
             "signatories": [
                 {
                     "signatory": "Ace",
-                    "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-                    "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+                    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+                    "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
                 },
                 {
                     "signatory": "Bee",
-                    "public_key": "0xb1966fd2d4d17c7963d485ac817b8a931b5be64e96ec65d5a6b575e6ff037e56",
-                    "authentication_key": "0xbeec3b1787e9fcc0362fe28ea2c8c7e98b42ab9355e95fb440612d629756903b"
+                    "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
+                    "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
                 }
             ]
         },
         "sequence_number": 2,
-        "chain_id": 44,
+        "chain_id": 47,
         "expiry": "2030-12-31T00:00:00"
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0xd956242c23a2a98a135e5685cc041b47b79866105d2cc91a507051a283fefae4",
-        "authentication_key": "0xaceb4c8b33e42978f775f3b95207a500b4f6a6866fa449f9c4bed3a70f2baabe"
+        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
+        "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
     },
-    "signature": "0x2621d89dce35d188fde2f8cae70f80bac01a8d0c5de5230477003e6b39113122d56cf217a71b2b92292e26a23a2a8f8a80cc3d4660292eaa6cefce0bbc29b604"
+    "signature": "0x5836ec63f489c25e637da3dc1cf8405b96d2ea6984933a39875e2e87795499c0a434a8ccee6adbefce39cc6bb42798b544e912dc766cf80c5690e3212015880c"
 }
 
 
 === Execute script invocation ===
 
 
-Extracting https://github.com/alnoki/aptos-core/archive/1c26076f5f.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp7wigfph5.
-Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp7wigfph5/aptos-core-1c26076f5f29f3e554393df6f6fb4851422755b9/aptos-move/move-examples/upgrade_and_govern/v1_1_0 --named-addresses upgrade_and_govern=0x2ab4d591c6d9a56c80fd3efecc8dbf2b6e13d64e1b2f1c1ab5eeb9f691c7da6e
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp4aoa6o0v.
+Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp4aoa6o0v/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
 INCLUDING DEPENDENCY AptosStdlib
 INCLUDING DEPENDENCY MoveStdlib
 BUILDING UpgradeAndGovern
-Transaction successful: 0x75c783e1ed49539d1d6681ba0c5baf931f49958e0635622eca68fbe66badbc54
+Transaction successful: 0x8f8a7f75c432487f1f000ee42e8198cdcdee3b68ad898cbf04b6271bfe114d2c
 ```
 
 </details>
