@@ -366,7 +366,10 @@ Then call up the help menu from the command line:
 :!: static/sdks/python/examples/multisig.sh help
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 usage: amee.py [-h] {keyfile,k,metafile,m,publish,p,rotate,r,script,s} ...
 
 Aptos Multisig Execution Expeditor (AMEE): A collection of tools designed to expedite multisig account execution.
@@ -383,6 +386,8 @@ options:
   -h, --help            show this help message and exit
 ```
 
+</details>
+
 AMEE offers a rich collection of useful subcommands, and to access their all of their help menus recursively, simply call the `multisig.sh` shell script file with the `menus` argument (still from inside the `sdk` directory):
 
 ```zsh title=Command
@@ -393,7 +398,10 @@ sh examples/multisig.sh menus
 This shell script file will be used for several other examples throughout the remainder of this tutorial, so try running it now!
 :::
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 
 <Top-level help menu>
 
@@ -437,6 +445,8 @@ options:
 
 ```
 
+</details>
+
 ### Step 9.1 Keyfiles
 
 Unlike the `aptos` CLI which stores private keys in plain text on disk, AMEE encrypts single-signer private keys in a [JSON](https://docs.python.org/3/library/json.html) keyfile format with password protection:
@@ -447,7 +457,10 @@ Unlike the `aptos` CLI which stores private keys in plain text on disk, AMEE enc
 
 This initiates a hidden password prompt and creates a new file on disk:
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 Enter new password for encrypting private key:
 Re-enter password:
 Keyfile now at the_aptos_foundation.keyfile:
@@ -461,17 +474,24 @@ Keyfile now at the_aptos_foundation.keyfile:
 }
 ```
 
+</details>
+
 This keyfile can be decrypted using the password to produce an unprotected account store (via `aptos_sdk.account.Account.store()`), which may be useful when trying to fund via the testnet faucet. Note here the abbreviation of `keyfile` to `k`:
 
 ```zsh title=Command
 :!: static/sdks/python/examples/multisig.sh extract_keyfile
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 Enter password for encrypted private key:
 New account store at the_aptos_foundation.account_store:
 {"account_address": "0x0e8b6be1755cd65e50ebd3300a18287ab2e96af1fbd4298f49b66ee2a8c5ac06", "private_key": "0x55fde61334143fa6dcbbab9ce1367bc82fb46d75c32be8989a31e548594c50ce"}
 ```
+
+</details>
 
 Similarly, AMEE can generate keyfiles from an unprotected account store format. Note here the abbreviation of `generate` to `g` and the optional `outfile` positional argument:
 
@@ -483,7 +503,10 @@ AMEE supports abbreviations for all commands and subcommands!
 :!: static/sdks/python/examples/multisig.sh generate_from_store
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 Enter new password for encrypting private key:
 Re-enter password:
 Keyfile now at from_store.keyfile:
@@ -497,6 +520,8 @@ Keyfile now at from_store.keyfile:
 }
 ```
 
+</details>
+
 To change the password on a keyfile:
 
 
@@ -504,7 +529,10 @@ To change the password on a keyfile:
 :!: static/sdks/python/examples/multisig.sh change_password
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 Enter password for encrypted private key:
 Enter new password for encrypting private key:
 Re-enter password:
@@ -519,18 +547,25 @@ Keyfile now at from_store.keyfile:
 }
 ```
 
+</details>
+
 Now verify the new password:
 
 ```zsh title=Command
 :!: static/sdks/python/examples/multisig.sh verify_password
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 Enter password for encrypted private key:
 Keyfile password verified for The Aptos Foundation
 Public key:         0x8b10b1b680e0e8734e58fe8466625fd7edff62a2cbbb9d83ddee2a593360b922
 Authentication key: 0x0e8b6be1755cd65e50ebd3300a18287ab2e96af1fbd4298f49b66ee2a8c5ac06
 ```
+
+</details>
 
 Note that all of these commands can be run in a scripted fashion simply by calling the `multisig.sh` shell script with the `keyfiles` argument.
 
@@ -567,7 +602,10 @@ The first part of the demo generates a vanity account for both Ace and Bee, via 
 
 Here, each keyfile's authentication key begins with the specified vanity prefix:
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 === Generate vanity account for Ace ===
 
 
@@ -601,13 +639,18 @@ Keyfile now at bee.keyfile:
 
 ```
 
+</details>
+
 Next, Ace and Bee are incorporated into a 1-of-2 multisig via `metafile incorporate`:
 
 ```zsh title="multisig.sh snippet"
 :!: static/sdks/python/examples/multisig.sh metafiles_incorporate
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 === Incorporate Ace and Bee into 1-of-2 multisig ===
 
 
@@ -635,13 +678,18 @@ Multisig metafile now at ace_and_bee.multisig:
 }
 ```
 
+</details>
+
 The `metafile threshold` command is used to increase the threshold to two signatures:
 
 ```zsh title="multisig.sh snippet"
 :!: static/sdks/python/examples/multisig.sh metafiles_threshold
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 === Increase threshold to two signatures ===
 
 
@@ -669,13 +717,18 @@ Multisig metafile now at ace_and_bee_increased.multisig:
 }
 ```
 
+</details>
+
 Now Cad and Dee have vanity accounts generated as well:
 
 ```zsh title="multisig.sh snippet"
 :!: static/sdks/python/examples/multisig.sh metafiles_cad_dee
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 === Generate vanity account for Cad ===
 
 
@@ -706,8 +759,9 @@ Keyfile now at dee.keyfile:
     "encrypted_private_key": "0x674141414141426b474f6675734e6f4d34705f59586c526139715454705279333455746b343052502d7231557a4c4b343562744470707159436956574b4d3076334650396662707331685a4847645571553067584856696c6b445162524e684257566a64494d6537356164663337706f464437565f70523846707063316d4e4a48684a516639574252474f48",
     "salt": "0xcac1fc0024c95e9d3637b9b5ed090b19"
 }
-
 ```
+
+</details>
 
 Now Cad and Dee are appended to the first multisig metafile via `metafile append`:
 
@@ -715,7 +769,10 @@ Now Cad and Dee are appended to the first multisig metafile via `metafile append
 :!: static/sdks/python/examples/multisig.sh metafiles_append
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 === Append Cad and Dee to 3-of-4 multisig ===
 
 
@@ -751,8 +808,9 @@ Multisig metafile now at cad_and_dee_added.multisig:
         }
     ]
 }
-
 ```
+
+</details>
 
 Finally, Ace and Dee are removed from the resultant multisig via `metafile remove` to produce another 1-of-2 multisig:
 
@@ -760,7 +818,10 @@ Finally, Ace and Dee are removed from the resultant multisig via `metafile remov
 :!: static/sdks/python/examples/multisig.sh metafiles_remove
 ```
 
-```zsh title=Output
+<details>
+<summary>Output</summary>
+
+```zsh
 === Remove Ace and Dee for 1-of-2 multisig ===
 
 
@@ -787,6 +848,8 @@ Multisig metafile now at ace_and_dee_removed.multisig:
     ]
 }
 ```
+
+</details>
 
 Thus far all AMEE operations have been conducted off-chain, because the relevant keyfile and metafile operations have simply involved public keys, private keys, and authentication keys.
 
