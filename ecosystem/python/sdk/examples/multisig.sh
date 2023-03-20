@@ -517,8 +517,10 @@ elif test $1 = govern; then
         965b6f5 \
         aptos-move/move-examples/upgrade_and_govern/genesis/Move.toml \
         upgrade_and_govern \
-        2030-12-31 \
-        Genesis \
+        --module-sequence \
+            parameters \
+        --expiry 2030-12-31 \
+        --name Genesis \
         --network devnet
 
     heading Sign publication proposal
@@ -547,8 +549,11 @@ elif test $1 = govern; then
         965b6f5 \
         aptos-move/move-examples/upgrade_and_govern/upgrade/Move.toml \
         upgrade_and_govern \
-        2030-12-31 \
-        Upgrade \
+        --module-sequence \
+            parameters \
+            transfer \
+        --expiry 2030-12-31 \
+        --name Upgrade \
         --network devnet
 
     heading Sign upgrade proposal

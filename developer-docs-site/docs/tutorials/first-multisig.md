@@ -1654,10 +1654,10 @@ Keyfile now at ace.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Ace",
-    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-    "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b",
-    "encrypted_private_key": "0x674141414141426b474f71724b6a445a5a67577675316d68326250513557364c776c6533424d3245704e496472565a6675366d6d533339766c45595731527041684a5f663455624178534a6962703239304878626a426a5039596f36316e585f62454d552d66324d6e7161393130516e425a4150723030365046452d3648583651637538565f73327447564c",
-    "salt": "0xf61319b170261fa68c60ad9173c0a8a7"
+    "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+    "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc",
+    "encrypted_private_key": "0x674141414141426b474f3451376343457438384f303450737a553633495672377137664f6e4e7145466b623930694c5a4835305874493651304155534151345931375364466c4b683978595553716d45694e3774786b66375a376537776f4e76754c676935554b36384a7a763748574f5a38425f313859515f7a33736576305144734a37345347772d643856",
+    "salt": "0x32ca9953b85b899bc1266e5f52d72ec8"
 }
 
 
@@ -1670,10 +1670,10 @@ Keyfile now at bee.keyfile:
 {
     "filetype": "Keyfile",
     "signatory": "Bee",
-    "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
-    "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7",
-    "encrypted_private_key": "0x674141414141426b474f71735543475038776b33386971373041385675716f55646368573242414f72504135435f4863354c504d555f675878634e59675f45453264684e4333484879726c4a752d4e78746b2d7a7066754b467a3356635f737347506653706833625f744d397a6774526467626633726b6b736c7657307857425353646f66634349454f6162",
-    "salt": "0xaf71769634cb599b6a90c5b01c52e584"
+    "public_key": "0x4c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a",
+    "authentication_key": "0xbee654e2c91e02a6c6bd98b99c0d6a0b84b314c5d90d36c6c96f85daef90eb29",
+    "encrypted_private_key": "0x674141414141426b474f34516331397270536645686369466c5a63315a5f2d66484454516e74765562495a5877414a775f366879326c63366b4643794e774c545557564a62486e78772d69783478636a673552676b516b345a377430504f4b61784863556e5a704d6337776354685a375679532d7a42744a325f6c47662d633452527562614e7935686b3263",
+    "salt": "0x95678e49f59d1c498ee7f0b83b893a12"
 }
 ```
 
@@ -1704,18 +1704,18 @@ Multisig metafile now at protocol.multisig:
     "address": null,
     "threshold": 1,
     "n_signatories": 2,
-    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
-    "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+    "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e6884c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a01",
+    "authentication_key": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-            "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+            "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+            "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
-            "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
+            "public_key": "0x4c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a",
+            "authentication_key": "0xbee654e2c91e02a6c6bd98b99c0d6a0b84b314c5d90d36c6c96f85daef90eb29"
         }
     ]
 }
@@ -1724,28 +1724,28 @@ Multisig metafile now at protocol.multisig:
 === Fund multisig ===
 
 
-Running aptos CLI command: aptos account fund-with-faucet --account 0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81 --faucet-url https://faucet.devnet.aptoslabs.com --url https://fullnode.devnet.aptoslabs.com/v1
+Running aptos CLI command: aptos account fund-with-faucet --account 0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec --faucet-url https://faucet.devnet.aptoslabs.com --url https://fullnode.devnet.aptoslabs.com/v1
 New balance: 100000000
 Updating address in multisig metafile.
 Multisig metafile now at protocol.multisig:
 {
     "filetype": "Multisig metafile",
     "multisig_name": "Protocol",
-    "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+    "address": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
     "threshold": 1,
     "n_signatories": 2,
-    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
-    "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+    "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e6884c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a01",
+    "authentication_key": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
     "signatories": [
         {
             "signatory": "Ace",
-            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-            "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+            "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+            "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
         },
         {
             "signatory": "Bee",
-            "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
-            "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
+            "public_key": "0x4c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a",
+            "authentication_key": "0xbee654e2c91e02a6c6bd98b99c0d6a0b84b314c5d90d36c6c96f85daef90eb29"
         }
     ]
 }
@@ -1801,24 +1801,27 @@ Publication proposal now at genesis.publication_proposal:
     "commit": "965b6f5",
     "manifest_path": "aptos-move/move-examples/upgrade_and_govern/genesis/Move.toml",
     "named_address": "upgrade_and_govern",
+    "module_sequence": [
+        "parameters"
+    ],
     "multisig": {
         "filetype": "Multisig metafile",
         "multisig_name": "Protocol",
-        "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+        "address": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
         "threshold": 1,
         "n_signatories": 2,
-        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
-        "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+        "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e6884c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a01",
+        "authentication_key": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
         "signatories": [
             {
                 "signatory": "Ace",
-                "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-                "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+                "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+                "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
             },
             {
                 "signatory": "Bee",
-                "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
-                "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
+                "public_key": "0x4c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a",
+                "authentication_key": "0xbee654e2c91e02a6c6bd98b99c0d6a0b84b314c5d90d36c6c96f85daef90eb29"
             }
         ]
     },
@@ -1831,8 +1834,8 @@ Publication proposal now at genesis.publication_proposal:
 === Sign publication proposal ===
 
 
-Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpzch0igs_.
-Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpzch0igs_/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/genesis --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpxzwx1kip.
+Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpxzwx1kip/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/genesis --named-addresses upgrade_and_govern=0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
@@ -1852,24 +1855,27 @@ Publication signature now at genesis.publication_signature:
         "commit": "965b6f5",
         "manifest_path": "aptos-move/move-examples/upgrade_and_govern/genesis/Move.toml",
         "named_address": "upgrade_and_govern",
+        "module_sequence": [
+            "parameters"
+        ],
         "multisig": {
             "filetype": "Multisig metafile",
             "multisig_name": "Protocol",
-            "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+            "address": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
             "threshold": 1,
             "n_signatories": 2,
-            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
-            "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+            "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e6884c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a01",
+            "authentication_key": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
             "signatories": [
                 {
                     "signatory": "Ace",
-                    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-                    "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+                    "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+                    "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
                 },
                 {
                     "signatory": "Bee",
-                    "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
-                    "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
+                    "public_key": "0x4c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a",
+                    "authentication_key": "0xbee654e2c91e02a6c6bd98b99c0d6a0b84b314c5d90d36c6c96f85daef90eb29"
                 }
             ]
         },
@@ -1879,25 +1885,25 @@ Publication signature now at genesis.publication_signature:
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-        "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+        "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+        "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
     },
-    "signature": "0xb9c03c86c3169127653a9be01b0df109670b0707b25d9eec67b592de1cd40cd96182edd499c670f143b50131f0ad441519a9065d1ae4599872e8f03e8c780c0f"
+    "signature": "0x77124d930ad708838183782bc974d5c0ae8459bb1962204de484fd6adb47fdf1ac25a38373e8147914671a0381fc12f866aabc8033192d2b7d122e918875030f"
 }
 
 
 === Execute publication ===
 
 
-Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmplehxvhhr.
-Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmplehxvhhr/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/genesis --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp77o1ui3g.
+Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp77o1ui3g/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/genesis --named-addresses upgrade_and_govern=0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
 INCLUDING DEPENDENCY AptosStdlib
 INCLUDING DEPENDENCY MoveStdlib
 BUILDING UpgradeAndGovern
-Transaction successful: 0x0a90c76fbe97e4bdd32155ad0e54007de44628a6ef5b64254fcd9f138d0a2ab8
+Transaction successful: 0x3e6fa333901a8a9933a8e01da8e547da74321947486f510b9d10671bf599b6a0
 ```
 
 </details>
@@ -1924,24 +1930,28 @@ Publication proposal now at upgrade.publication_proposal:
     "commit": "965b6f5",
     "manifest_path": "aptos-move/move-examples/upgrade_and_govern/upgrade/Move.toml",
     "named_address": "upgrade_and_govern",
+    "module_sequence": [
+        "parameters",
+        "transfer"
+    ],
     "multisig": {
         "filetype": "Multisig metafile",
         "multisig_name": "Protocol",
-        "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+        "address": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
         "threshold": 1,
         "n_signatories": 2,
-        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
-        "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+        "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e6884c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a01",
+        "authentication_key": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
         "signatories": [
             {
                 "signatory": "Ace",
-                "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-                "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+                "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+                "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
             },
             {
                 "signatory": "Bee",
-                "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
-                "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
+                "public_key": "0x4c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a",
+                "authentication_key": "0xbee654e2c91e02a6c6bd98b99c0d6a0b84b314c5d90d36c6c96f85daef90eb29"
             }
         ]
     },
@@ -1954,8 +1964,8 @@ Publication proposal now at upgrade.publication_proposal:
 === Sign upgrade proposal ===
 
 
-Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpanhgyxta.
-Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpanhgyxta/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpsnj4d5f2.
+Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpsnj4d5f2/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
@@ -1975,24 +1985,28 @@ Publication signature now at upgrade.publication_signature:
         "commit": "965b6f5",
         "manifest_path": "aptos-move/move-examples/upgrade_and_govern/upgrade/Move.toml",
         "named_address": "upgrade_and_govern",
+        "module_sequence": [
+            "parameters",
+            "transfer"
+        ],
         "multisig": {
             "filetype": "Multisig metafile",
             "multisig_name": "Protocol",
-            "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+            "address": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
             "threshold": 1,
             "n_signatories": 2,
-            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
-            "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+            "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e6884c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a01",
+            "authentication_key": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
             "signatories": [
                 {
                     "signatory": "Ace",
-                    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-                    "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+                    "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+                    "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
                 },
                 {
                     "signatory": "Bee",
-                    "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
-                    "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
+                    "public_key": "0x4c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a",
+                    "authentication_key": "0xbee654e2c91e02a6c6bd98b99c0d6a0b84b314c5d90d36c6c96f85daef90eb29"
                 }
             ]
         },
@@ -2002,25 +2016,25 @@ Publication signature now at upgrade.publication_signature:
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-        "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+        "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+        "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
     },
-    "signature": "0x43668cd0aa46ac42c71aaa5c1ee26e5b8afa26dd0db73fc0da5c32192de2d2c4cfcf9346201970d038f100be54862874bdbe369931651b436f1a7600a66ae60b"
+    "signature": "0xf10efc093a1a7ae62f1939bddbb83d3951668fab1af5361412fb7b3ddc438d0703aa2cfdd4007e3c8f684600b42d6f5e941e21b6c0615dc12079230e8c665906"
 }
 
 
 === Execute upgrade ===
 
 
-Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpqz3do3j6.
-Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpqz3do3j6/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp7_vh_ja0.
+Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp7_vh_ja0/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
 INCLUDING DEPENDENCY AptosStdlib
 INCLUDING DEPENDENCY MoveStdlib
 BUILDING UpgradeAndGovern
-Transaction successful: 0x6e742e4b86948bc06ed63940e3953343a286da843f194bccf67beeb4f4ff8960
+Transaction successful: 0x9800e6bffe17072c63bb4c5b23763e61135b3957e38181223879445454d95064
 ```
 
 </details>
@@ -2061,21 +2075,21 @@ Script proposal now at invoke.script_proposal:
     "multisig": {
         "filetype": "Multisig metafile",
         "multisig_name": "Protocol",
-        "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+        "address": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
         "threshold": 1,
         "n_signatories": 2,
-        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
-        "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+        "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e6884c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a01",
+        "authentication_key": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
         "signatories": [
             {
                 "signatory": "Ace",
-                "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-                "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+                "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+                "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
             },
             {
                 "signatory": "Bee",
-                "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
-                "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
+                "public_key": "0x4c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a",
+                "authentication_key": "0xbee654e2c91e02a6c6bd98b99c0d6a0b84b314c5d90d36c6c96f85daef90eb29"
             }
         ]
     },
@@ -2088,8 +2102,8 @@ Script proposal now at invoke.script_proposal:
 === Sign invocation proposal ===
 
 
-Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpt4dw7zbc.
-Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpt4dw7zbc/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpout_mpw2.
+Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpout_mpw2/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
@@ -2113,21 +2127,21 @@ Script signature now at invoke.script_signature:
         "multisig": {
             "filetype": "Multisig metafile",
             "multisig_name": "Protocol",
-            "address": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+            "address": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
             "threshold": 1,
             "n_signatories": 2,
-            "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c01",
-            "authentication_key": "0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81",
+            "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e6884c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a01",
+            "authentication_key": "0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec",
             "signatories": [
                 {
                     "signatory": "Ace",
-                    "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-                    "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+                    "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+                    "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
                 },
                 {
                     "signatory": "Bee",
-                    "public_key": "0x54032522e0dfe411bda99c2bfacc01e0341155aacafb3fce680c4418f8fb1a2c",
-                    "authentication_key": "0xbee62cc3a1816547021fc3fadfc5181a16417a4b5f2f5e034af4a8ccd4067ad7"
+                    "public_key": "0x4c975513021598e108d7fe494116b8177a4562781984d5135904ee324a99e66a",
+                    "authentication_key": "0xbee654e2c91e02a6c6bd98b99c0d6a0b84b314c5d90d36c6c96f85daef90eb29"
                 }
             ]
         },
@@ -2137,25 +2151,25 @@ Script signature now at invoke.script_signature:
     },
     "signatory": {
         "signatory": "Ace",
-        "public_key": "0xe9247d01ce348550d4bf2ff338e378e1376faa503b0d96f639c84b6cd532b24d",
-        "authentication_key": "0xace05782c898495775b36731975fdff4f7d64162b2b369719141916c4d006b7b"
+        "public_key": "0x466bc39951c1655f3a069e3aa8008fea8ce06b1d4369453dae27ef350156e688",
+        "authentication_key": "0xace0c53165faa60e289b06a1b331acda8730aeecfe071896778b4a9dcb56c3fc"
     },
-    "signature": "0x5836ec63f489c25e637da3dc1cf8405b96d2ea6984933a39875e2e87795499c0a434a8ccee6adbefce39cc6bb42798b544e912dc766cf80c5690e3212015880c"
+    "signature": "0x2dfdadc1465f079c5106504acc0ca63723807b9b53689ca564b7bdd858f00f7639f5443bcce0fd69e22981109e4385e398a55892afd4c2aea739a6449382ce05"
 }
 
 
 === Execute script invocation ===
 
 
-Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp4aoa6o0v.
-Running aptos CLI command: aptos move compile --save-metadata --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmp4aoa6o0v/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0xb79e7eb3a5955bc21d0a83ea182111035175e78aa2c18f26dfd48d45ac935e81
+Extracting https://github.com/aptos-labs/aptos-core/archive/965b6f5.zip to temporary directory /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpxcr6g_8r.
+Running aptos CLI command: aptos move compile --save-metadata --included-artifacts none --package-dir /var/folders/4c/rtts9qpj3yq0f5_f_gbl6cn40000gn/T/tmpxcr6g_8r/aptos-core-965b6f54aa0664da885a0858f2c42e15a58ab79f/aptos-move/move-examples/upgrade_and_govern/upgrade --named-addresses upgrade_and_govern=0x214c3bae3231c134b59036daa22b518a007f398cf71aa2b5bc873c781c10ccec
 
 Compiling, may take a little while to download git dependencies...
 INCLUDING DEPENDENCY AptosFramework
 INCLUDING DEPENDENCY AptosStdlib
 INCLUDING DEPENDENCY MoveStdlib
 BUILDING UpgradeAndGovern
-Transaction successful: 0x8f8a7f75c432487f1f000ee42e8198cdcdee3b68ad898cbf04b6271bfe114d2c
+Transaction successful: 0xd4220b0bf55608df4d00ead8fc07ee19c9b7cc4b1a8a1aec4b4bf0e7f503b83f
 ```
 
 </details>
