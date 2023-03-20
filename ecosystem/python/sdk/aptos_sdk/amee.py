@@ -517,7 +517,9 @@ def download_and_compile(proposal: Dict[str, Any]):
         # Get named address for build command.
         named_address = proposal["named_address"]
         command = (  # Get aptos CLI build command.
-            f"aptos move compile --save-metadata --included-artifacts none "
+            f"aptos move compile "
+            f"--save-metadata "
+            f"--included-artifacts none "
             f"--package-dir {manifest_path.parent} "
             f"--named-addresses {named_address}={multisig_address}"
         )
