@@ -18,6 +18,7 @@ use async_trait::async_trait;
 use bcs::to_bytes;
 use clap::Parser;
 use serde::Serialize;
+use sha2::Digest;
 
 /// Create a new multisig account (v2) on-chain.
 ///
@@ -107,6 +108,9 @@ pub struct CreateTransaction {
     pub(crate) txn_options: TransactionOptions,
     #[clap(flatten)]
     pub(crate) entry_function_args: EntryFunctionArguments,
+    /// Pass this flag if only storing transaction hash on-chain. Else full payload is stored
+    #[clap(long)]
+    pub(crate) hash_only: bool,
 }
 
 #[async_trait]
@@ -116,13 +120,22 @@ impl CliCommand<TransactionSummary> for CreateTransaction {
     }
 
     async fn execute(self) -> CliTypedResult<TransactionSummary> {
-        let payload =
-            MultisigTransactionPayload::EntryFunction(self.entry_function_args.try_into()?);
-        self.txn_options
-            .submit_transaction(aptos_stdlib::multisig_account_create_transaction(
+        let entry_function_payload_bytes = to_bytes(&MultisigTransactionPayload::EntryFunction(
+            self.entry_function_args.try_into()?,
+        ))?;
+        let multisig_transaction_payload = if self.hash_only {
+            aptos_stdlib::multisig_account_create_transaction_with_hash(
                 self.multisig_account.multisig_address,
-                to_bytes(&payload)?,
-            ))
+                sha2::Sha256::digest(&entry_function_payload_bytes).to_vec(),
+            )
+        } else {
+            aptos_stdlib::multisig_account_create_transaction_with_hash(
+                self.multisig_account.multisig_address,
+                entry_function_payload_bytes,
+            )
+        };
+        self.txn_options
+            .submit_transaction(multisig_transaction_payload)
             .await
             .map(|inner| inner.into())
     }

@@ -75,6 +75,7 @@ reqwest = { workspace = true }
 self_update = { version = "0.34.0", features = ["archive-zip", "compression-zip-deflate"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
+sha2 = { workspace = true}
 serde_yaml = { workspace = true }
 shadow-rs = { workspace = true }
 tempfile = { workspace = true }
