@@ -14,10 +14,10 @@ use crate::{
     account::derive_resource_account::ResourceAccountSeed,
     common::{
         types::{
-            load_account_arg, CliConfig, CliError, CliTypedResult, ConfigSearchMode,
-            EntryFunctionArguments, MoveManifestAccountWrapper, MovePackageDir, ProfileOptions,
-            PromptOptions, RestOptions, ScriptFunctionArguments, TransactionOptions,
-            TransactionSummary,
+            load_account_arg, ArgWithTypeJSON, CliConfig, CliError, CliTypedResult,
+            ConfigSearchMode, EntryFunctionArguments, EntryFunctionArgumentsJSON,
+            MoveManifestAccountWrapper, MovePackageDir, ProfileOptions, PromptOptions, RestOptions,
+            SaveFile, ScriptFunctionArguments, TransactionOptions, TransactionSummary,
         },
         utils::{
             check_if_file_exists, create_dir_if_not_exist, dir_default_to_current,
@@ -38,6 +38,7 @@ use aptos_framework::{
     prover::ProverOptions, BuildOptions, BuiltPackage,
 };
 use aptos_gas::{AbstractValueSizeGasParameters, NativeGasParameters};
+use aptos_rest_client::aptos_api_types;
 use aptos_transactional_test_harness::run_aptos_test;
 use aptos_types::{
     account_address::{create_resource_address, AccountAddress},
@@ -52,11 +53,16 @@ use codespan_reporting::{
 use itertools::Itertools;
 use move_cli::{self, base::test::UnitTestResult};
 use move_command_line_common::env::MOVE_HOME;
-use move_core_types::{identifier::Identifier, language_storage::ModuleId, u256::U256};
+use move_core_types::{
+    identifier::Identifier,
+    language_storage::{ModuleId, StructTag},
+    u256::U256,
+};
 use move_package::{source_package::layout::SourcePackageLayout, BuildConfig};
 use move_unit_test::UnitTestingConfig;
 pub use package_hooks::*;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::{
     collections::BTreeMap,
     fmt::{Display, Formatter},
@@ -172,24 +178,30 @@ impl FrameworkPackageArgs {
         // Add the framework dependency if it's provided
         let mut dependencies = BTreeMap::new();
         if let Some(ref path) = self.framework_local_dir {
-            dependencies.insert(APTOS_FRAMEWORK.to_string(), Dependency {
-                local: Some(path.display().to_string()),
-                git: None,
-                rev: None,
-                subdir: None,
-                aptos: None,
-                address: None,
-            });
+            dependencies.insert(
+                APTOS_FRAMEWORK.to_string(),
+                Dependency {
+                    local: Some(path.display().to_string()),
+                    git: None,
+                    rev: None,
+                    subdir: None,
+                    aptos: None,
+                    address: None,
+                },
+            );
         } else {
             let git_rev = self.framework_git_rev.as_deref().unwrap_or(DEFAULT_BRANCH);
-            dependencies.insert(APTOS_FRAMEWORK.to_string(), Dependency {
-                local: None,
-                git: Some(APTOS_GIT_PATH.to_string()),
-                rev: Some(git_rev.to_string()),
-                subdir: Some(SUBDIR_PATH.to_string()),
-                aptos: None,
-                address: None,
-            });
+            dependencies.insert(
+                APTOS_FRAMEWORK.to_string(),
+                Dependency {
+                    local: None,
+                    git: Some(APTOS_GIT_PATH.to_string()),
+                    rev: Some(git_rev.to_string()),
+                    subdir: Some(SUBDIR_PATH.to_string()),
+                    aptos: None,
+                    address: None,
+                },
+            );
         }
 
         let manifest = MovePackageManifest {
@@ -625,6 +637,9 @@ pub struct PublishPackage {
     pub(crate) move_options: MovePackageDir,
     #[clap(flatten)]
     pub(crate) txn_options: TransactionOptions,
+    /// JSON output file to write publication transaction to instead of publishing on-chain
+    #[clap(long, parse(from_os_str))]
+    pub(crate) json_output_file: Option<PathBuf>,
 }
 
 #[derive(ArgEnum, Clone, Copy, Debug)]
@@ -717,6 +732,7 @@ impl CliCommand<TransactionSummary> for PublishPackage {
             txn_options,
             override_size_check,
             included_artifacts_args,
+            json_output_file,
         } = self;
         let package_path = move_options.get_package_path()?;
         let options = included_artifacts_args.included_artifacts.build_options(
@@ -743,7 +759,62 @@ impl CliCommand<TransactionSummary> for PublishPackage {
                 MAX_PUBLISH_PACKAGE_SIZE, size
             )));
         }
-        profile_or_submit(payload, &txn_options).await
+        if json_output_file.is_none() {
+            profile_or_submit(payload, &txn_options).await
+        } else {
+            let entry_function = payload.into_entry_function();
+            let json = EntryFunctionArgumentsJSON {
+                // Cast function ID to StructTag for string formatting.
+                function_id: format!(
+                    "{}",
+                    StructTag {
+                        address: *entry_function.module().address(),
+                        module: entry_function.module().name().to_owned(),
+                        name: entry_function.function().to_owned(),
+                        type_params: vec![]
+                    }
+                ),
+                type_args: vec![],
+                args: vec![
+                    ArgWithTypeJSON {
+                        arg_type: format!("u8"),
+                        arg_value: json!(entry_function.args()[0]), // Metadata bytes array.
+                    },
+                    ArgWithTypeJSON {
+                        arg_type: format!("u8"),
+                        arg_value: json!(entry_function.args()[1]), // Code bytes array.
+                    },
+                ],
+            };
+            let save_file = SaveFile {
+                output_file: json_output_file.unwrap(),
+                prompt_options: txn_options.prompt_options,
+            };
+            save_file.check_file()?;
+            save_file.save_to_file(
+                "Publication entry function JSON file",
+                serde_json::to_string_pretty(&json)
+                    .map_err(|err| CliError::UnexpectedError(format!("{}", err)))?
+                    .as_bytes(),
+            )?;
+            Ok(TransactionSummary {
+                // Pass bogus hash for required struct field.
+                transaction_hash: aptos_api_types::HashValue::from(HashValue::zero()),
+                gas_used: None,
+                gas_unit_price: None,
+                pending: None,
+                sender: None,
+                sequence_number: None,
+                success: None,
+                timestamp_us: None,
+                version: None,
+                // Pass feedback message in available String field.
+                vm_status: Some(format!(
+                    "Publication entry function JSON file saved to {}",
+                    save_file.output_file.display()
+                )),
+            })
+        }
     }
 }
 

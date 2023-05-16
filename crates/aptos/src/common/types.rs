@@ -844,7 +844,7 @@ pub struct SaveFile {
 }
 
 impl SaveFile {
-    /// Check if the key file exists already
+    /// Check if the `output_file` exists already
     pub fn check_file(&self) -> CliTypedResult<()> {
         check_if_file_exists(self.output_file.as_path(), self.prompt_options)
     }
@@ -1891,19 +1891,19 @@ impl ScriptFunctionArguments {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 /// JSON file format for function arguments.
 pub struct ArgWithTypeJSON {
-    arg_type: String,
-    arg_value: serde_json::Value,
+    pub(crate) arg_type: String,
+    pub(crate) arg_value: serde_json::Value,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 /// JSON file format for entry function arguments.
-struct EntryFunctionArgumentsJSON {
-    function_id: String,
-    type_args: Vec<String>,
-    args: Vec<ArgWithTypeJSON>,
+pub struct EntryFunctionArgumentsJSON {
+    pub(crate) function_id: String,
+    pub(crate) type_args: Vec<String>,
+    pub(crate) args: Vec<ArgWithTypeJSON>,
 }
 
 #[derive(Deserialize)]
