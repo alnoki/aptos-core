@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common::types::{
-    CliCommand, CliTypedResult, EntryFunctionArguments, MultisigAccount, TransactionOptions,
-    TransactionSummary,
+    CliCommand, CliError, CliTypedResult, EntryFunctionArguments, MultisigAccount,
+    TransactionOptions, TransactionSummary,
 };
 use aptos_cached_packages::aptos_stdlib;
 use aptos_rest_client::{
-    aptos_api_types::{WriteResource, WriteSetChange},
+    aptos_api_types::{ViewRequest, WriteResource, WriteSetChange},
     Transaction,
 };
 use aptos_types::{
@@ -18,6 +18,7 @@ use async_trait::async_trait;
 use bcs::to_bytes;
 use clap::Parser;
 use serde::Serialize;
+use serde_json::json;
 use sha2::Digest;
 
 /// Create a new multisig account (v2) on-chain.
@@ -129,7 +130,7 @@ impl CliCommand<TransactionSummary> for CreateTransaction {
                 sha2::Sha256::digest(&entry_function_payload_bytes).to_vec(),
             )
         } else {
-            aptos_stdlib::multisig_account_create_transaction_with_hash(
+            aptos_stdlib::multisig_account_create_transaction(
                 self.multisig_account.multisig_address,
                 entry_function_payload_bytes,
             )
@@ -138,6 +139,69 @@ impl CliCommand<TransactionSummary> for CreateTransaction {
             .submit_transaction(multisig_transaction_payload)
             .await
             .map(|inner| inner.into())
+    }
+}
+
+/// Check entry function against on-chain transaction proposal payload.
+#[derive(Debug, Parser)]
+pub struct CheckTransaction {
+    #[clap(flatten)]
+    pub(crate) multisig_account: MultisigAccount,
+    #[clap(flatten)]
+    pub(crate) txn_options: TransactionOptions,
+    #[clap(flatten)]
+    pub(crate) entry_function_args: EntryFunctionArguments,
+    /// Transaction ID (sequence number) to check
+    #[clap(long)]
+    pub(crate) transaction_id: u64,
+}
+
+#[async_trait]
+impl CliCommand<serde_json::Value> for CheckTransaction {
+    fn command_name(&self) -> &'static str {
+        "CheckTransactionMultisig"
+    }
+
+    async fn execute(self) -> CliTypedResult<serde_json::Value> {
+        // Get a view function request for given transaction ID.
+        let view_request = ViewRequest {
+            function: "0x1::multisig_account::get_transaction".parse()?,
+            type_arguments: vec![],
+            arguments: vec![
+                serde_json::Value::String(String::from(&self.multisig_account.multisig_address)),
+                serde_json::Value::String(self.transaction_id.to_string()),
+            ],
+        };
+        // Get the multisig transaction proposal from the view request.
+        let multisig_transaction = &self.txn_options.view(view_request).await?[0];
+        let multisig_payload = multisig_transaction["payload"]["vec"].as_array().unwrap();
+        // Get expected bytes from provided entry function.
+        let expected_entry_function_bytes = to_bytes(&MultisigTransactionPayload::EntryFunction(
+            self.entry_function_args.try_into()?,
+        ))?;
+        // Get expected bytes and actual hex string to compare. First case for payload provided:
+        let (expected_bytes, actual_hex) = if !multisig_payload.is_empty() {
+            (expected_entry_function_bytes, multisig_payload[0].clone())
+        // Otherwise if only payload hash provided, compare accordingly:
+        } else {
+            (
+                sha2::Sha256::digest(&expected_entry_function_bytes).to_vec(),
+                multisig_transaction["payload_hash"]["vec"]
+                    .as_array()
+                    .unwrap()[0]
+                    .clone(),
+            )
+        };
+        // If expected bytes matches actual hex string from view function:
+        if format!("\"0x{}\"", hex::encode(expected_bytes.clone())).eq(&format!("{}", actual_hex)) {
+            Ok(json!({
+                "Status": "Transaction match",
+                "Multisig transaction": multisig_transaction
+            }))
+            // If a mismatch between expected bytes and actual hex:
+        } else {
+            Err(CliError::UnexpectedError(format!("Payload mismatch")))
+        }
     }
 }
 

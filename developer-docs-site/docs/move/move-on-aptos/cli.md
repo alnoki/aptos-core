@@ -630,3 +630,256 @@ aptos move view \
 :::note
 As of the time of this writing, the `aptos` CLI only supports script function arguments for vectors of type `u8`, and only up to a vector depth of 1. Hence `vector<address>` and `vector<vector<u8>>` are invalid script function argument types.
 :::
+
+
+## Multisig governance
+
+For this example, Ace and Bee will conduct governance operations from a 2-of-2 multisig account.
+
+### Account creation
+
+Start by mining a vanity address for both signatories:
+
+```bash title=Command
+aptos key generate \
+    --vanity-prefix 0xace \
+    --output-file ace.key
+```
+
+```bash title=Result
+{
+  "Result": {
+    "PrivateKey Path": "ace.key",
+    "Account Address:": "0xace5aaa770883b5d767457108d4b6c1bfd6a89ebe88e08a6b8c272811e7477a6",
+    "PublicKey Path": "ace.key.pub"
+  }
+}
+```
+
+```bash title=Command
+aptos key generate \
+    --vanity-prefix 0xbee \
+    --output-file bee.key
+```
+
+```bash title=Result
+{
+  "Result": {
+    "PrivateKey Path": "bee.key",
+    "PublicKey Path": "bee.key.pub",
+    "Account Address:": "0xbeec8e62e52e3da0eeaf0545f2073c820b560920e456b387b20af7e3e253b719"
+  }
+}
+```
+
+:::tip
+The exact account address should vary for each run, though the vanity prefix should not.
+:::
+
+Store Ace and Bee's addresses in shell variables so you can call them inline later on:
+
+```bash title=Command
+# Your exact addresses should vary
+ace_addr=0xace5aaa770883b5d767457108d4b6c1bfd6a89ebe88e08a6b8c272811e7477a6
+bee_addr=0xbeec8e62e52e3da0eeaf0545f2073c820b560920e456b387b20af7e3e253b719
+```
+
+Now fund Ace's and Bee's accounts using the faucet:
+
+```bash title=Command
+aptos account fund-with-faucet --account $ace_addr
+```
+
+```bash title=Result
+{
+  "Result": "Added 100000000 Octas to account ace5aaa770883b5d767457108d4b6c1bfd6a89ebe88e08a6b8c272811e7477a6"
+}
+```
+
+```bash title=Command
+aptos account fund-with-faucet --account $bee_addr
+```
+
+```bash title=Result
+{
+  "Result": "Added 100000000 Octas to account beec8e62e52e3da0eeaf0545f2073c820b560920e456b387b20af7e3e253b719"
+}
+```
+
+Ace can now create a multisig account:
+
+```bash title=Command
+aptos multisig create \
+    --additional-owners $bee_addr \
+    --num-signatures-required 2 \
+    --private-key-file ace.key
+```
+
+```bash title=Result
+{
+  "Result": {
+    "multisig_address": "652d37ddcb013d8582bd8daae0d2a18a168e056c902f0afd75009f88188c4663",
+    "transaction_hash": "0x4945d2c259a0a5e094b06fce2890e892d7b2b934f8f71447936d60f90481a9f3",
+    "gas_used": 1524,
+    "gas_unit_price": 100,
+    "sender": "ace5aaa770883b5d767457108d4b6c1bfd6a89ebe88e08a6b8c272811e7477a6",
+    "sequence_number": 0,
+    "success": true,
+    "timestamp_us": 1684286657721942,
+    "version": 522663009,
+    "vm_status": "Executed successfully"
+  }
+}
+```
+
+Store the multisig address in a shell variable:
+
+```bash
+multisig_addr=652d37ddcb013d8582bd8daae0d2a18a168e056c902f0afd75009f88188c4663
+```
+
+### Entry function invocation
+
+Start by sending 1234 Aptos coins from Ace to the multisig:
+
+```bash title=Command
+aptos move run \
+    --function-id 0x1::coin::transfer \
+    --type-args 0x1::aptos_coin::AptosCoin \
+    --args \
+        address:"$multisig_addr" \
+        u64:1234 \
+    --private-key-file ace.key
+```
+
+```bash title=Result
+{
+  "Result": {
+    "transaction_hash": "0x744924dff770146b8de4cfb27062dc65827be70ebcd734ed15d415bd31b5f8d3",
+    "gas_used": 5,
+    "gas_unit_price": 100,
+    "sender": "ace46ffb772dfe7dfc83567bcaf60c863d79c78a6a5c1deed3d4bd77144bcca2",
+    "sequence_number": 1,
+    "success": true,
+    "timestamp_us": 1684286082386907,
+    "version": 522658800,
+    "vm_status": "Executed successfully"
+  }
+}
+```
+
+Now have Bee create a transaction proposal for sending 321 coins from the multisig to herself, implicitly approving the proposal:
+
+```bash title=Command
+aptos multisig create-transaction \
+    --multisig-address $multisig_addr \
+    --function-id 0x1::coin::transfer \
+    --type-args 0x1::aptos_coin::AptosCoin \
+    --args \
+        address:"$bee_addr" \
+        u64:321 \
+    --private-key-file bee.key
+```
+
+```bash title=Result
+{
+  "Result": {
+    "transaction_hash": "0x710f13ef3fa90c22cc3521ce17a17752808c31275e32988e0135a757ce4b1318",
+    "gas_used": 510,
+    "gas_unit_price": 100,
+    "sender": "beec8e62e52e3da0eeaf0545f2073c820b560920e456b387b20af7e3e253b719",
+    "sequence_number": 0,
+    "success": true,
+    "timestamp_us": 1684286705143101,
+    "version": 522663367,
+    "vm_status": "Executed successfully"
+  }
+}
+```
+
+Check that the on-chain proposal matches the expected transfer:
+
+```bash title=Command
+aptos multisig check-transaction \
+    --multisig-address $multisig_addr \
+    --transaction-id 1 \
+    --function-id 0x1::coin::transfer \
+    --type-args 0x1::aptos_coin::AptosCoin \
+    --args \
+        address:"$bee_addr" \
+        u64:321
+```
+
+```bash title=output
+{
+  "Result": {
+    "Status": "Transaction match",
+    "Multisig transaction": {
+      "creation_time_secs": "1684286705",
+      "creator": "0xbeec8e62e52e3da0eeaf0545f2073c820b560920e456b387b20af7e3e253b719",
+      "payload": {
+        "vec": [
+          "0x00000000000000000000000000000000000000000000000000000000000000000104636f696e087472616e73666572010700000000000000000000000000000000000000000000000000000000000000010a6170746f735f636f696e094170746f73436f696e000220beec8e62e52e3da0eeaf0545f2073c820b560920e456b387b20af7e3e253b719084101000000000000"
+        ]
+      },
+      "payload_hash": {
+        "vec": []
+      },
+      "votes": {
+        "data": [
+          {
+            "key": "0xbeec8e62e52e3da0eeaf0545f2073c820b560920e456b387b20af7e3e253b719",
+            "value": true
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+Note that the check fails for a transfer with only 320 coins:
+
+```bash title=Command
+aptos multisig check-transaction \
+    --multisig-address $multisig_addr \
+    --transaction-id 1 \
+    --function-id 0x1::coin::transfer \
+    --type-args 0x1::aptos_coin::AptosCoin \
+    --args \
+        address:"$bee_addr" \
+        u64:320
+```
+
+```bash title=Output
+{
+  "Error": "Unexpected error: Payload mismatch"
+}
+```
+
+Now have Ace sign off on the transfer:
+
+```bash title=Command
+aptos multisig approve \
+    --multisig-address $multisig_addr \
+    --sequence-number 1 \
+    --private-key-file ace.key
+```
+
+```bash title=Output
+{
+  "Result": {
+    "transaction_hash": "0xe8f1aa73f11f57be67ca20a891d8b737ef7282927e75849bb2d7b149a685ee03",
+    "gas_used": 6,
+    "gas_unit_price": 100,
+    "sender": "ace5aaa770883b5d767457108d4b6c1bfd6a89ebe88e08a6b8c272811e7477a6",
+    "sequence_number": 2,
+    "success": true,
+    "timestamp_us": 1684291624183813,
+    "version": 522699207,
+    "vm_status": "Executed successfully"
+  }
+}
+```
+
+Now either Ace or Bee can execute the transaction on behalf of the multisig:
