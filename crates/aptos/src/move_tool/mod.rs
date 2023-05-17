@@ -39,7 +39,7 @@ use aptos_framework::{
 };
 use aptos_gas::{AbstractValueSizeGasParameters, NativeGasParameters};
 use aptos_rest_client::aptos_api_types::{
-    self, Address, EntryFunctionId, HexEncodedBytes, IdentifierWrapper, MoveModuleId,
+    self, EntryFunctionId, HexEncodedBytes, IdentifierWrapper, MoveModuleId,
 };
 use aptos_transactional_test_harness::run_aptos_test;
 use aptos_types::{
@@ -55,16 +55,11 @@ use codespan_reporting::{
 use itertools::Itertools;
 use move_cli::{self, base::test::UnitTestResult};
 use move_command_line_common::env::MOVE_HOME;
-use move_core_types::{
-    identifier::Identifier,
-    language_storage::{ModuleId, StructTag},
-    u256::U256,
-};
+use move_core_types::{identifier::Identifier, language_storage::ModuleId, u256::U256};
 use move_package::{source_package::layout::SourcePackageLayout, BuildConfig};
 use move_unit_test::UnitTestingConfig;
 pub use package_hooks::*;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use std::{
     collections::BTreeMap,
     fmt::{Display, Formatter},
@@ -769,11 +764,11 @@ impl CliCommand<TransactionSummary> for PublishPackage {
             // Extract entry function data from publication payload.
             let entry_function = payload.into_entry_function();
             let entry_function_id = EntryFunctionId {
-                module: MoveModuleId::from(*entry_function.module()),
+                module: MoveModuleId::from(entry_function.module().clone()),
                 name: IdentifierWrapper::from(entry_function.function()),
             };
-            let package_metadata = HexEncodedBytes(entry_function.args()[0]);
-            let package_code = HexEncodedBytes(entry_function.args()[1]);
+            let package_metadata = HexEncodedBytes(entry_function.args()[0].clone());
+            let package_code = HexEncodedBytes(entry_function.args()[1].clone());
             // Construct entry function JSON file representation from entry function data.
             let json = EntryFunctionArgumentsJSON {
                 function_id: entry_function_id.to_string(),
