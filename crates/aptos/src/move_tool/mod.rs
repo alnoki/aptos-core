@@ -38,7 +38,9 @@ use aptos_framework::{
     prover::ProverOptions, BuildOptions, BuiltPackage,
 };
 use aptos_gas::{AbstractValueSizeGasParameters, NativeGasParameters};
-use aptos_rest_client::aptos_api_types;
+use aptos_rest_client::aptos_api_types::{
+    self, Address, EntryFunctionId, HexEncodedBytes, IdentifierWrapper, MoveModuleId,
+};
 use aptos_transactional_test_harness::run_aptos_test;
 use aptos_types::{
     account_address::{create_resource_address, AccountAddress},
@@ -759,33 +761,35 @@ impl CliCommand<TransactionSummary> for PublishPackage {
                 MAX_PUBLISH_PACKAGE_SIZE, size
             )));
         }
+        // If no JSON output file specified, publish on-chain.
         if json_output_file.is_none() {
             profile_or_submit(payload, &txn_options).await
+        // If JSON output file specified, store entry function JSON file on disk.
         } else {
+            // Extract entry function data from publication payload.
             let entry_function = payload.into_entry_function();
+            let entry_function_id = EntryFunctionId {
+                module: MoveModuleId::from(*entry_function.module()),
+                name: IdentifierWrapper::from(entry_function.function()),
+            };
+            let package_metadata = HexEncodedBytes(entry_function.args()[0]);
+            let package_code = HexEncodedBytes(entry_function.args()[1]);
+            // Construct entry function JSON file representation from entry function data.
             let json = EntryFunctionArgumentsJSON {
-                // Cast function ID to StructTag for string formatting.
-                function_id: format!(
-                    "{}",
-                    StructTag {
-                        address: *entry_function.module().address(),
-                        module: entry_function.module().name().to_owned(),
-                        name: entry_function.function().to_owned(),
-                        type_params: vec![]
-                    }
-                ),
+                function_id: entry_function_id.to_string(),
                 type_args: vec![],
                 args: vec![
                     ArgWithTypeJSON {
-                        arg_type: format!("u8"),
-                        arg_value: json!(entry_function.args()[0]), // Metadata bytes array.
+                        arg_type: format!("hex"),
+                        arg_value: serde_json::Value::String(package_metadata.to_string()),
                     },
                     ArgWithTypeJSON {
-                        arg_type: format!("u8"),
-                        arg_value: json!(entry_function.args()[1]), // Code bytes array.
+                        arg_type: format!("hex"),
+                        arg_value: serde_json::Value::String(package_code.to_string()),
                     },
                 ],
             };
+            // Create save file options for checking and saving file to disk.
             let save_file = SaveFile {
                 output_file: json_output_file.unwrap(),
                 prompt_options: txn_options.prompt_options,
@@ -1276,7 +1280,9 @@ impl FunctionArgType {
             )
             .map_err(|err| CliError::BCS("arg", err)),
             FunctionArgType::Hex => bcs::to_bytes(
-                &hex::decode(arg).map_err(|err| CliError::UnableToParse("hex", err.to_string()))?,
+                HexEncodedBytes::from_str(arg)
+                    .map_err(|err| CliError::UnableToParse("hex", err.to_string()))?
+                    .inner(),
             )
             .map_err(|err| CliError::BCS("arg", err)),
             FunctionArgType::String => bcs::to_bytes(arg).map_err(|err| CliError::BCS("arg", err)),
@@ -1309,9 +1315,10 @@ impl FunctionArgType {
                     .map_err(|err| CliError::UnableToParse("u256", err.to_string()))?,
             )
             .map_err(|err| CliError::BCS("arg", err)),
-            FunctionArgType::Raw => {
-                hex::decode(arg).map_err(|err| CliError::UnableToParse("raw", err.to_string()))
-            },
+            FunctionArgType::Raw => Ok(HexEncodedBytes::from_str(arg)
+                .map_err(|err| CliError::UnableToParse("raw", err.to_string()))?
+                .inner()
+                .to_vec()),
         }
     }
 
