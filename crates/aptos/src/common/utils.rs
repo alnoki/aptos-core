@@ -480,3 +480,8 @@ pub fn parse_json_file<T: for<'a> Deserialize<'a>>(path_ref: &Path) -> CliTypedR
         CliError::UnableToReadFile(format!("{}", path_ref.display()), err.to_string())
     })
 }
+
+/// Return reference to inner option vector for JSON field known to have option ("vec" attribute).
+pub fn get_json_option_vec_ref(value_ref: &serde_json::Value) -> &Vec<serde_json::Value> {
+    value_ref["vec"].as_array().unwrap()
+}

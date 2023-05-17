@@ -33,8 +33,8 @@ use aptos_sdk::{transaction_builder::TransactionFactory, types::LocalAccount};
 use aptos_types::{
     chain_id::ChainId,
     transaction::{
-        authenticator::AuthenticationKey, EntryFunction, Script, SignedTransaction,
-        TransactionArgument, TransactionPayload, TransactionStatus,
+        authenticator::AuthenticationKey, EntryFunction, MultisigTransactionPayload, Script,
+        SignedTransaction, TransactionArgument, TransactionPayload, TransactionStatus,
     },
 };
 use async_trait::async_trait;
@@ -1832,6 +1832,14 @@ impl TryInto<EntryFunction> for EntryFunctionArguments {
             entry_function_args.type_arg_vec.try_into()?,
             entry_function_args.arg_vec.try_into()?,
         ))
+    }
+}
+
+impl TryInto<MultisigTransactionPayload> for EntryFunctionArguments {
+    type Error = CliError;
+
+    fn try_into(self) -> Result<MultisigTransactionPayload, Self::Error> {
+        Ok(MultisigTransactionPayload::EntryFunction(self.try_into()?))
     }
 }
 

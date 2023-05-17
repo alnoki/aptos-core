@@ -1,13 +1,16 @@
 // Copyright © Aptos Foundation
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::types::{
-    CliCommand, CliError, CliTypedResult, EntryFunctionArguments, MultisigAccount,
-    TransactionOptions, TransactionSummary,
+use crate::common::{
+    types::{
+        CliCommand, CliError, CliTypedResult, EntryFunctionArguments, MultisigAccount,
+        TransactionOptions, TransactionSummary,
+    },
+    utils::get_json_option_vec_ref,
 };
 use aptos_cached_packages::aptos_stdlib;
 use aptos_rest_client::{
-    aptos_api_types::{ViewRequest, WriteResource, WriteSetChange},
+    aptos_api_types::{HexEncodedBytes, ViewRequest, WriteResource, WriteSetChange},
     Transaction,
 };
 use aptos_types::{
@@ -121,22 +124,21 @@ impl CliCommand<TransactionSummary> for CreateTransaction {
     }
 
     async fn execute(self) -> CliTypedResult<TransactionSummary> {
-        let entry_function_payload_bytes = to_bytes(&MultisigTransactionPayload::EntryFunction(
-            self.entry_function_args.try_into()?,
-        ))?;
-        let multisig_transaction_payload = if self.hash_only {
+        let multisig_transaction_payload_bytes =
+            to_bytes::<MultisigTransactionPayload>(&self.entry_function_args.try_into()?)?;
+        let transaction_payload = if self.hash_only {
             aptos_stdlib::multisig_account_create_transaction_with_hash(
                 self.multisig_account.multisig_address,
-                sha2::Sha256::digest(&entry_function_payload_bytes).to_vec(),
+                sha2::Sha256::digest(&multisig_transaction_payload_bytes).to_vec(),
             )
         } else {
             aptos_stdlib::multisig_account_create_transaction(
                 self.multisig_account.multisig_address,
-                entry_function_payload_bytes,
+                multisig_transaction_payload_bytes,
             )
         };
         self.txn_options
-            .submit_transaction(multisig_transaction_payload)
+            .submit_transaction(transaction_payload)
             .await
             .map(|inner| inner.into())
     }
@@ -163,43 +165,53 @@ impl CliCommand<serde_json::Value> for CheckTransaction {
     }
 
     async fn execute(self) -> CliTypedResult<serde_json::Value> {
-        // Get a view function request for given transaction ID.
-        let view_request = ViewRequest {
-            function: "0x1::multisig_account::get_transaction".parse()?,
-            type_arguments: vec![],
-            arguments: vec![
-                serde_json::Value::String(String::from(&self.multisig_account.multisig_address)),
-                serde_json::Value::String(self.transaction_id.to_string()),
-            ],
-        };
-        // Get the multisig transaction proposal from the view request.
-        let multisig_transaction = &self.txn_options.view(view_request).await?[0];
-        let multisig_payload = multisig_transaction["payload"]["vec"].as_array().unwrap();
-        // Get expected bytes from provided entry function.
-        let expected_entry_function_bytes = to_bytes(&MultisigTransactionPayload::EntryFunction(
-            self.entry_function_args.try_into()?,
-        ))?;
-        // Get expected bytes and actual hex string to compare. First case for payload provided:
-        let (expected_bytes, actual_hex) = if !multisig_payload.is_empty() {
-            (expected_entry_function_bytes, multisig_payload[0].clone())
-        // Otherwise if only payload hash provided, compare accordingly:
-        } else {
-            (
-                sha2::Sha256::digest(&expected_entry_function_bytes).to_vec(),
-                multisig_transaction["payload_hash"]["vec"]
-                    .as_array()
-                    .unwrap()[0]
-                    .clone(),
-            )
-        };
-        // If expected bytes matches actual hex string from view function:
-        if format!("\"0x{}\"", hex::encode(expected_bytes.clone())).eq(&format!("{}", actual_hex)) {
+        // Get multisig transaction via view function.
+        let multisig_transaction = &self
+            .txn_options
+            .view(ViewRequest {
+                function: "0x1::multisig_account::get_transaction".parse()?,
+                type_arguments: vec![],
+                arguments: vec![
+                    serde_json::Value::String(String::from(
+                        &self.multisig_account.multisig_address,
+                    )),
+                    serde_json::Value::String(self.transaction_id.to_string()),
+                ],
+            })
+            .await?[0];
+        // Get reference to inner payload option from multisig transaction.
+        let multisig_payload_option_ref = get_json_option_vec_ref(&multisig_transaction["payload"]);
+        // Get expected multisig transaction payload bytes from provided entry function.
+        let expected_multisig_transaction_payload_bytes =
+            to_bytes::<MultisigTransactionPayload>(&self.entry_function_args.try_into()?)?;
+        // If full payload stored on-chain, get expected bytes and reference to actual hex option:
+        let (expected_bytes, actual_value_hex_option_ref) =
+            if !multisig_payload_option_ref.is_empty() {
+                (
+                    expected_multisig_transaction_payload_bytes,
+                    multisig_payload_option_ref,
+                )
+            // If only payload hash on-chain, get different compare values:
+            } else {
+                (
+                    sha2::Sha256::digest(&expected_multisig_transaction_payload_bytes).to_vec(),
+                    get_json_option_vec_ref(&multisig_transaction["payload_hash"]),
+                )
+            };
+        // If expected bytes matches actual hex from view function:
+        if expected_bytes.eq(&actual_value_hex_option_ref[0]
+            .as_str()
+            .unwrap()
+            .parse::<HexEncodedBytes>()?
+            .inner())
+        {
+            // Return success message.
             Ok(json!({
                 "Status": "Transaction match",
                 "Multisig transaction": multisig_transaction
             }))
-            // If a mismatch between expected bytes and actual hex:
         } else {
+            // If a mismatch between expected bytes and actual hex, error out.
             Err(CliError::UnexpectedError(format!("Payload mismatch")))
         }
     }
@@ -283,6 +295,8 @@ pub struct Execute {
     pub(crate) multisig_account: MultisigAccount,
     #[clap(flatten)]
     pub(crate) txn_options: TransactionOptions,
+    #[clap(flatten)]
+    pub(crate) entry_function_args: EntryFunctionArguments,
 }
 
 #[async_trait]
@@ -294,8 +308,7 @@ impl CliCommand<TransactionSummary> for Execute {
     async fn execute(self) -> CliTypedResult<TransactionSummary> {
         let payload = TransactionPayload::Multisig(Multisig {
             multisig_address: self.multisig_account.multisig_address,
-            // TODO: Support passing an explicit payload
-            transaction_payload: None,
+            transaction_payload: Some(self.entry_function_args.try_into()?),
         });
         self.txn_options
             .submit_transaction(payload)
