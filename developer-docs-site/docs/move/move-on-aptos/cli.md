@@ -1255,7 +1255,7 @@ Pending the resolution of [#8304](https://github.com/aptos-labs/aptos-core/issue
 
 <details><summary>Output</summary>
 
-Also pending the resolution of [#8304](https://github.com/aptos-labs/aptos-core/issues/8304), the output for a successful multisig publication transaction execution throws an API error, but the transaction can be manually verified using an explorer.
+Also pending the resolution of [#8304](https://github.com/aptos-labs/aptos-core/issues/8304), the CLI output for a successful multisig publication transaction execution results in an API error if only the payload hash has been stored on-chain, but the transaction can be manually verified using an explorer.
 
 </details>
 
