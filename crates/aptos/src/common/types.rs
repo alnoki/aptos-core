@@ -1789,7 +1789,7 @@ pub struct EntryFunctionArguments {
     /// Function name as `<ADDRESS>::<MODULE_ID>::<FUNCTION_NAME>`
     ///
     /// Example: `0x842ed41fad9640a2ad08fdd7d3e4f7f505319aac7d67e1c0dd6a7cce8732c7e3::message::set_message`
-    #[clap(long, required_unless_present = "json-file")]
+    #[clap(long)]
     pub function_id: Option<MemberId>,
 
     #[clap(flatten)]
@@ -1804,9 +1804,15 @@ pub struct EntryFunctionArguments {
 
 impl EntryFunctionArguments {
     /// Get instance as if all fields passed from command line, parsing JSON input file if needed.
-    fn check_json_file(self) -> CliTypedResult<EntryFunctionArguments> {
+    fn check_input_style(self) -> CliTypedResult<EntryFunctionArguments> {
         if self.json_file.is_none() {
-            Ok(self)
+            if self.function_id.is_none() {
+                Err(CliError::CommandArgumentError(
+                    "Must provide either function ID or JSON input file".to_string(),
+                ))
+            } else {
+                Ok(self)
+            }
         } else {
             let json =
                 parse_json_file::<EntryFunctionArgumentsJSON>(self.json_file.as_ref().unwrap())?;
@@ -1824,7 +1830,7 @@ impl TryInto<EntryFunction> for EntryFunctionArguments {
     type Error = CliError;
 
     fn try_into(self) -> Result<EntryFunction, Self::Error> {
-        let entry_function_args = self.check_json_file()?;
+        let entry_function_args = self.check_input_style()?;
         let function_id = entry_function_args.function_id.unwrap();
         Ok(EntryFunction::new(
             function_id.module_id,
@@ -1843,11 +1849,23 @@ impl TryInto<MultisigTransactionPayload> for EntryFunctionArguments {
     }
 }
 
+impl TryInto<Option<MultisigTransactionPayload>> for EntryFunctionArguments {
+    type Error = CliError;
+
+    fn try_into(self) -> Result<Option<MultisigTransactionPayload>, Self::Error> {
+        if self.function_id.is_none() && self.json_file.is_none() {
+            Ok(None)
+        } else {
+            Ok(Some(self.try_into()?))
+        }
+    }
+}
+
 impl TryInto<ViewRequest> for EntryFunctionArguments {
     type Error = CliError;
 
     fn try_into(self) -> Result<ViewRequest, Self::Error> {
-        let entry_function_args = self.check_json_file()?;
+        let entry_function_args = self.check_input_style()?;
         let function_id = entry_function_args.function_id.unwrap();
         Ok(ViewRequest {
             function: EntryFunctionId {
@@ -1875,7 +1893,7 @@ pub struct ScriptFunctionArguments {
 
 impl ScriptFunctionArguments {
     /// Get instance as if all fields passed from command line, parsing JSON input file if needed.
-    fn check_json_file(self) -> CliTypedResult<ScriptFunctionArguments> {
+    fn check_input_style(self) -> CliTypedResult<ScriptFunctionArguments> {
         if self.json_file.is_none() {
             Ok(self)
         } else {
@@ -1890,7 +1908,7 @@ impl ScriptFunctionArguments {
     }
 
     pub fn create_script_payload(self, bytecode: Vec<u8>) -> CliTypedResult<TransactionPayload> {
-        let script_function_args = self.check_json_file()?;
+        let script_function_args = self.check_input_style()?;
         Ok(TransactionPayload::Script(Script::new(
             bytecode,
             script_function_args.type_arg_vec.try_into()?,

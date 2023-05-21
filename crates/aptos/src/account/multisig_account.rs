@@ -306,12 +306,11 @@ impl CliCommand<TransactionSummary> for Execute {
     }
 
     async fn execute(self) -> CliTypedResult<TransactionSummary> {
-        let payload = TransactionPayload::Multisig(Multisig {
-            multisig_address: self.multisig_account.multisig_address,
-            transaction_payload: Some(self.entry_function_args.try_into()?),
-        });
         self.txn_options
-            .submit_transaction(payload)
+            .submit_transaction(TransactionPayload::Multisig(Multisig {
+                multisig_address: self.multisig_account.multisig_address,
+                transaction_payload: self.entry_function_args.try_into()?,
+            }))
             .await
             .map(|inner| inner.into())
     }
