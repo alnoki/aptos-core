@@ -176,30 +176,24 @@ impl FrameworkPackageArgs {
         // Add the framework dependency if it's provided
         let mut dependencies = BTreeMap::new();
         if let Some(ref path) = self.framework_local_dir {
-            dependencies.insert(
-                APTOS_FRAMEWORK.to_string(),
-                Dependency {
-                    local: Some(path.display().to_string()),
-                    git: None,
-                    rev: None,
-                    subdir: None,
-                    aptos: None,
-                    address: None,
-                },
-            );
+            dependencies.insert(APTOS_FRAMEWORK.to_string(), Dependency {
+                local: Some(path.display().to_string()),
+                git: None,
+                rev: None,
+                subdir: None,
+                aptos: None,
+                address: None,
+            });
         } else {
             let git_rev = self.framework_git_rev.as_deref().unwrap_or(DEFAULT_BRANCH);
-            dependencies.insert(
-                APTOS_FRAMEWORK.to_string(),
-                Dependency {
-                    local: None,
-                    git: Some(APTOS_GIT_PATH.to_string()),
-                    rev: Some(git_rev.to_string()),
-                    subdir: Some(SUBDIR_PATH.to_string()),
-                    aptos: None,
-                    address: None,
-                },
-            );
+            dependencies.insert(APTOS_FRAMEWORK.to_string(), Dependency {
+                local: None,
+                git: Some(APTOS_GIT_PATH.to_string()),
+                rev: Some(git_rev.to_string()),
+                subdir: Some(SUBDIR_PATH.to_string()),
+                aptos: None,
+                address: None,
+            });
         }
 
         let manifest = MovePackageManifest {
@@ -758,11 +752,8 @@ impl CliCommand<TransactionSummary> for PublishPackage {
                 MAX_PUBLISH_PACKAGE_SIZE, size
             )));
         }
-        // If no JSON output file specified, publish on-chain.
-        if json_output_file.is_none() {
-            profile_or_submit(payload, &txn_options).await
         // If JSON output file specified, store entry function JSON file on disk.
-        } else {
+        if let Some(output_file) = json_output_file {
             // Extract entry function data from publication payload.
             let entry_function = payload.into_entry_function();
             let entry_function_id = EntryFunctionId {
@@ -781,18 +772,18 @@ impl CliCommand<TransactionSummary> for PublishPackage {
                 type_args: vec![],
                 args: vec![
                     ArgWithTypeJSON {
-                        arg_type: format!("hex"),
+                        arg_type: "hex".to_string(),
                         arg_value: serde_json::Value::String(package_metadata_hex),
                     },
                     ArgWithTypeJSON {
-                        arg_type: format!("hex"),
+                        arg_type: "hex".to_string(),
                         arg_value: json!(package_code_hex_vec),
                     },
                 ],
             };
             // Create save file options for checking and saving file to disk.
             let save_file = SaveFile {
-                output_file: json_output_file.unwrap(),
+                output_file,
                 prompt_options: txn_options.prompt_options,
             };
             save_file.check_file()?;
@@ -819,6 +810,9 @@ impl CliCommand<TransactionSummary> for PublishPackage {
                     save_file.output_file.display()
                 )),
             })
+        // If no JSON output file specified, publish on-chain.
+        } else {
+            profile_or_submit(payload, &txn_options).await
         }
     }
 }

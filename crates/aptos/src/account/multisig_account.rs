@@ -214,7 +214,7 @@ impl CliCommand<serde_json::Value> for CheckTransaction {
             }))
         } else {
             // If a mismatch between expected bytes and actual hex, error out.
-            Err(CliError::UnexpectedError(format!("Payload mismatch")))
+            Err(CliError::UnexpectedError("Payload mismatch".to_string()))
         }
     }
 }
