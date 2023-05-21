@@ -60,6 +60,7 @@ use move_package::{source_package::layout::SourcePackageLayout, BuildConfig};
 use move_unit_test::UnitTestingConfig;
 pub use package_hooks::*;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::{
     collections::BTreeMap,
     fmt::{Display, Formatter},
@@ -741,10 +742,11 @@ impl CliCommand<TransactionSummary> for PublishPackage {
         let compiled_units = package.extract_code();
 
         // Send the compiled module and metadata using the code::publish_package_txn.
-        let metadata = package.extract_metadata()?;
+        let metadata_serialized =
+            bcs::to_bytes(&package.extract_metadata()?).expect("PackageMetadata has BCS");
         let payload = aptos_cached_packages::aptos_stdlib::code_publish_package_txn(
-            bcs::to_bytes(&metadata).expect("PackageMetadata has BCS"),
-            compiled_units,
+            metadata_serialized.clone(),
+            compiled_units.clone(),
         );
         let size = bcs::serialized_size(&payload)?;
         println!("package size {} bytes", size);
@@ -767,8 +769,12 @@ impl CliCommand<TransactionSummary> for PublishPackage {
                 module: MoveModuleId::from(entry_function.module().clone()),
                 name: IdentifierWrapper::from(entry_function.function()),
             };
-            let package_metadata = HexEncodedBytes(entry_function.args()[0].clone());
-            let package_code = HexEncodedBytes(entry_function.args()[1].clone());
+            let package_metadata_hex = HexEncodedBytes(metadata_serialized).to_string();
+            let package_code_hex_vec: Vec<String> = compiled_units
+                .clone()
+                .into_iter()
+                .map(|element| HexEncodedBytes(element).to_string())
+                .collect();
             // Construct entry function JSON file representation from entry function data.
             let json = EntryFunctionArgumentsJSON {
                 function_id: entry_function_id.to_string(),
@@ -776,11 +782,11 @@ impl CliCommand<TransactionSummary> for PublishPackage {
                 args: vec![
                     ArgWithTypeJSON {
                         arg_type: format!("hex"),
-                        arg_value: serde_json::Value::String(package_metadata.to_string()),
+                        arg_value: serde_json::Value::String(package_metadata_hex),
                     },
                     ArgWithTypeJSON {
                         arg_type: format!("hex"),
-                        arg_value: serde_json::Value::String(package_code.to_string()),
+                        arg_value: json!(package_code_hex_vec),
                     },
                 ],
             };
