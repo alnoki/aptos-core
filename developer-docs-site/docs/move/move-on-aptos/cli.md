@@ -1152,7 +1152,7 @@ Before Bee votes, however, she checks that the payload hash stored on-chain matc
 aptos multisig check-transaction \
     --multisig-address $multisig_addr \
     --json-file publication.json \
-    --transaction-id 1
+    --sequence-number 1
 ```
 
 <details><summary>Output</summary>
@@ -1296,7 +1296,7 @@ aptos multisig check-transaction \
         u8:123 \
         "bool:[false, true, false, false]" \
         'address:[["0xace", "0xbee"], ["0xcad"], []]' \
-    --transaction-id 2
+    --sequence-number 2
 ```
 
 <details><summary>Output</summary>
@@ -1344,7 +1344,7 @@ aptos multisig check-transaction \
         u8:200 \
         "bool:[false, true, false, false]" \
         'address:[["0xace", "0xbee"], ["0xcad"], []]' \
-    --transaction-id 2
+    --sequence-number 2
 ```
 
 <details><summary>Output</summary>

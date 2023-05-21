@@ -154,9 +154,9 @@ pub struct CheckTransaction {
     pub(crate) txn_options: TransactionOptions,
     #[clap(flatten)]
     pub(crate) entry_function_args: EntryFunctionArguments,
-    /// Transaction ID (sequence number) to check
+    /// Sequence number of multisig transaction to check
     #[clap(long)]
-    pub(crate) transaction_id: u64,
+    pub(crate) sequence_number: u64,
 }
 
 #[async_trait]
@@ -176,7 +176,7 @@ impl CliCommand<serde_json::Value> for CheckTransaction {
                     serde_json::Value::String(String::from(
                         &self.multisig_account.multisig_address,
                     )),
-                    serde_json::Value::String(self.transaction_id.to_string()),
+                    serde_json::Value::String(self.sequence_number.to_string()),
                 ],
             })
             .await?[0];
