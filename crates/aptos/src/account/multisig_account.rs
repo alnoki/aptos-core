@@ -23,6 +23,7 @@ use clap::Parser;
 use serde::Serialize;
 use serde_json::json;
 use sha2::Digest;
+use sha3::Sha3_256;
 
 /// Create a new multisig account (v2) on-chain.
 ///
@@ -129,7 +130,7 @@ impl CliCommand<TransactionSummary> for CreateTransaction {
         let transaction_payload = if self.hash_only {
             aptos_stdlib::multisig_account_create_transaction_with_hash(
                 self.multisig_account.multisig_address,
-                sha2::Sha256::digest(&multisig_transaction_payload_bytes).to_vec(),
+                Sha3_256::digest(&multisig_transaction_payload_bytes).to_vec(),
             )
         } else {
             aptos_stdlib::multisig_account_create_transaction(
@@ -195,7 +196,7 @@ impl CliCommand<serde_json::Value> for CheckTransaction {
             // If only payload hash on-chain, get different compare values:
             } else {
                 (
-                    sha2::Sha256::digest(&expected_multisig_transaction_payload_bytes).to_vec(),
+                    Sha3_256::digest(&expected_multisig_transaction_payload_bytes).to_vec(),
                     get_view_json_option_vec_ref(&multisig_transaction["payload_hash"]),
                 )
             };
