@@ -6,7 +6,7 @@ use crate::common::{
         CliCommand, CliError, CliTypedResult, EntryFunctionArguments, MultisigAccount,
         TransactionOptions, TransactionSummary,
     },
-    utils::get_json_option_vec_ref,
+    utils::get_view_json_option_vec_ref,
 };
 use aptos_cached_packages::aptos_stdlib;
 use aptos_rest_client::{
@@ -180,7 +180,8 @@ impl CliCommand<serde_json::Value> for CheckTransaction {
             })
             .await?[0];
         // Get reference to inner payload option from multisig transaction.
-        let multisig_payload_option_ref = get_json_option_vec_ref(&multisig_transaction["payload"]);
+        let multisig_payload_option_ref =
+            get_view_json_option_vec_ref(&multisig_transaction["payload"]);
         // Get expected multisig transaction payload bytes from provided entry function.
         let expected_multisig_transaction_payload_bytes =
             to_bytes::<MultisigTransactionPayload>(&self.entry_function_args.try_into()?)?;
@@ -195,7 +196,7 @@ impl CliCommand<serde_json::Value> for CheckTransaction {
             } else {
                 (
                     sha2::Sha256::digest(&expected_multisig_transaction_payload_bytes).to_vec(),
-                    get_json_option_vec_ref(&multisig_transaction["payload_hash"]),
+                    get_view_json_option_vec_ref(&multisig_transaction["payload_hash"]),
                 )
             };
         // If expected bytes matches actual hex from view function:
