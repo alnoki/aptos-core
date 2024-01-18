@@ -85,7 +85,8 @@ module aptos_framework::cpmm {
                 base_reserve,
                 quote_metadata,
                 quote_reserve,
-                constant_product: (base_reserve as u128) * (quote_reserve as u128),
+                constant_product:
+                    (base_reserve as u128) * (quote_reserve as u128),
                 fee_in_basis_points,
                 mint_ref,
                 burn_ref: fungible_asset::generate_burn_ref(&constructor_ref),
