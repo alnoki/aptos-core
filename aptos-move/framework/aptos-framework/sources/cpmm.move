@@ -64,6 +64,50 @@ module aptos_framework::cpmm {
         slippage_after_fees_in_basis_points: u16,
     }
 
+    public entry fun add_liquidity(
+        provider: &signer,
+        pool_address: address,
+        quote_amount: u64,
+    ) acquires Pool {
+        let (pool_ref_mut, base_reserve, quote_reserve) =
+            check_and_borrow_pool_with_reserves_mut(pool_address);
+        let quote_reserve_new =
+            (quote_reserve as u128) + (quote_amount as u128);
+        assert!(quote_reserve_new <= U64_MAX, E_ADD_QUOTE_OVERFLOW);
+        let base_reserve_new = math128::mul_div(
+            (base_reserve as u128),
+            quote_reserve_new,
+            (quote_reserve as u128)
+        );
+        assert!(base_reserve_new <= U64_MAX, E_ADD_BASE_OVERFLOW);
+        primary_fungible_store::transfer(
+            provider,
+            pool_ref_mut.base_metadata,
+            pool_address,
+            (base_reserve_new as u64) - base_reserve
+        );
+        primary_fungible_store::transfer(
+            provider,
+            pool_ref_mut.quote_metadata,
+            pool_address,
+            quote_amount
+        );
+        let lp_token_supply = get_lp_token_supply_unchecked(pool_address);
+        let mint_amount = math128::mul_div(
+            lp_token_supply,
+            (quote_amount as u128),
+            quote_reserve_new
+        );
+        assert!(mint_amount < U64_MAX, E_MINT_AMOUNT_OVERFLOW);
+        primary_fungible_store::mint(
+            &pool_ref_mut.lp_token_mint_ref,
+            signer::address_of(provider),
+            (mint_amount as u64),
+        );
+        pool_ref_mut.base_reserve = (base_reserve_new as u64);
+        pool_ref_mut.quote_reserve = (quote_reserve_new as u64);
+    }
+
     public entry fun create_pool(
         creator: &signer,
         base_reserve: u64,
@@ -126,50 +170,6 @@ module aptos_framework::cpmm {
                     fungible_asset::generate_burn_ref(&constructor_ref),
             },
         );
-    }
-
-    public entry fun add_liquidity(
-        provider: &signer,
-        pool_address: address,
-        quote_amount: u64,
-    ) acquires Pool {
-        let (pool_ref_mut, base_reserve, quote_reserve) =
-            check_and_borrow_pool_with_reserves_mut(pool_address);
-        let quote_reserve_new =
-            (quote_reserve as u128) + (quote_amount as u128);
-        assert!(quote_reserve_new <= U64_MAX, E_ADD_QUOTE_OVERFLOW);
-        let base_reserve_new = math128::mul_div(
-            (base_reserve as u128),
-            quote_reserve_new,
-            (quote_reserve as u128)
-        );
-        assert!(base_reserve_new <= U64_MAX, E_ADD_BASE_OVERFLOW);
-        primary_fungible_store::transfer(
-            provider,
-            pool_ref_mut.base_metadata,
-            pool_address,
-            (base_reserve_new as u64) - base_reserve
-        );
-        primary_fungible_store::transfer(
-            provider,
-            pool_ref_mut.quote_metadata,
-            pool_address,
-            quote_amount
-        );
-        let lp_token_supply = get_lp_token_supply_unchecked(pool_address);
-        let mint_amount = math128::mul_div(
-            lp_token_supply,
-            (quote_amount as u128),
-            quote_reserve_new
-        );
-        assert!(mint_amount < U64_MAX, E_MINT_AMOUNT_OVERFLOW);
-        primary_fungible_store::mint(
-            &pool_ref_mut.lp_token_mint_ref,
-            signer::address_of(provider),
-            (mint_amount as u64),
-        );
-        pool_ref_mut.base_reserve = (base_reserve_new as u64);
-        pool_ref_mut.quote_reserve = (quote_reserve_new as u64);
     }
 
     public entry fun remove_liquidity(
@@ -331,16 +331,6 @@ module aptos_framework::cpmm {
         (pool_ref_mut, base_reserve, quote_reserve)
     }
 
-    inline fun get_lp_token_supply_unchecked(
-        pool_address: address,
-    ): u128 {
-        option::destroy_some(
-            fungible_asset::supply<Pool>(
-                object::address_to_object(pool_address)
-            )
-        )
-    }
-
     inline fun get_asset_metadata_view(
         metadata: Object<Metadata>,
     ): AssetMetadata {
@@ -350,6 +340,16 @@ module aptos_framework::cpmm {
             symbol: fungible_asset::symbol(metadata),
             decimals: fungible_asset::decimals(metadata),
         }
+    }
+
+    inline fun get_lp_token_supply_unchecked(
+        pool_address: address,
+    ): u128 {
+        option::destroy_some(
+            fungible_asset::supply<Pool>(
+                object::address_to_object(pool_address)
+            )
+        )
     }
 
     inline fun get_pool_signer(
