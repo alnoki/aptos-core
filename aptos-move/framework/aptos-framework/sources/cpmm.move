@@ -310,15 +310,7 @@ module aptos_framework::cpmm {
         u64,
         u64,
     ) acquires Pool {
-        assert!(exists<Pool>(pool_address), E_NO_POOL);
-        let pool_ref = borrow_global<Pool>(pool_address);
-        assert!(
-            pool_ref.base_reserve != 0 && pool_ref.quote_reserve != 0,
-            E_DEAD_POOL
-        );
-        let base_reserve = pool_ref.base_reserve;
-        let quote_reserve = pool_ref.quote_reserve;
-        (pool_ref, base_reserve, quote_reserve)
+        check_and_borrow_pool_with_reserves_mut(pool_address)
     }
 
     inline fun check_and_borrow_pool_with_reserves_mut(
