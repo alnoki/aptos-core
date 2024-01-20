@@ -8,20 +8,22 @@ module constant_product_market_maker::constant_product_market_maker {
     use std::signer;
     use std::string::String;
 
-    /// All liquidity has been removed from the pool. It is dead.
-    const E_DEAD_POOL: u64 = 0;
+    /// All base has been removed from the pool. It is dead.
+    const E_DEAD_POOL_NO_BASE: u64 = 0;
+    /// All quote has been removed from the pool. It is dead.
+    const E_DEAD_POOL_NO_QUOTE: u64 = 1;
     /// Unable to add quote reserves due to overflow.
-    const E_ADD_QUOTE_OVERFLOW: u64 = 1;
+    const E_ADD_QUOTE_OVERFLOW: u64 = 2;
     /// Unable to add base reserves due to overflow.
-    const E_ADD_BASE_OVERFLOW: u64 = 2;
+    const E_ADD_BASE_OVERFLOW: u64 = 3;
     /// May not mint more than (2^64 - 1) liquidity provider tokens.
-    const E_MINT_AMOUNT_OVERFLOW: u64 = 3;
+    const E_MINT_AMOUNT_OVERFLOW: u64 = 4;
     /// No pool at specified address.
-    const E_NO_POOL: u64 = 4;
+    const E_NO_POOL: u64 = 5;
     /// Actual base asset in the pool is less than expected reserves.
-    const E_BASE_NOT_COLLATERALIZED: u64 = 5;
+    const E_BASE_NOT_COLLATERALIZED: u64 = 6;
     /// Actual quote asset in the pool is less than expected reserves.
-    const E_QUOTE_NOT_COLLATERALIZED: u64 = 6;
+    const E_QUOTE_NOT_COLLATERALIZED: u64 = 7;
 
     const BASIS_POINTS_PER_UNIT: u16 = 10_000;
     const U64_MAX: u128 = 0xffffffffffffffff;
@@ -68,7 +70,7 @@ module constant_product_market_maker::constant_product_market_maker {
         fee_in_basis_points: u16,
         fee_in_output_asset: u16,
         output_amount_after_fees: u64,
-        slippage_including_fees_in_basis_points: u16,
+        price_impact_including_fees_in_basis_points: u16,
     }
 
     public entry fun add_liquidity(
@@ -418,10 +420,10 @@ module constant_product_market_maker::constant_product_market_maker {
         let quote_reserve = pool_ref_mut.quote_reserve;
         let actual_quote_in_store =
             primary_fungible_store::balance(pool_address, quote_metadata);
-        if (check_dead_pool) assert!(
-            pool_ref_mut.base_reserve != 0 && pool_ref_mut.quote_reserve != 0,
-            E_DEAD_POOL
-        );
+        if (check_dead_pool) {
+            assert!(base_reserve != 0, E_DEAD_POOL_NO_BASE);
+            assert!(quote_reserve != 0, E_DEAD_POOL_NO_QUOTE);
+        };
         if (check_collateralization) {
             assert!(
                 actual_base_in_store >= base_reserve,
