@@ -75,26 +75,33 @@ module constant_product_market_maker::constant_product_market_maker {
     ) acquires Pool {
         let (pool_ref_mut, base_reserve, quote_reserve) =
             check_and_borrow_pool_with_reserves_mut(pool_address);
+        let (actual_base_in_store, actual_quote_in_store) =
+            get_actual_asset_store_balances(pool_ref_mut, pool_address);
         check_collateralization(
-            pool_ref_mut,
-            pool_address,
             base_reserve,
-            quote_reserve
+            quote_reserve,
+            actual_base_in_store,
+            actual_quote_in_store,
         );
         let quote_reserve_new =
             (quote_reserve as u128) + (quote_amount as u128);
-        assert!(quote_reserve_new <= U64_MAX, E_ADD_QUOTE_OVERFLOW);
+        let actual_quote_in_store_new =
+            (actual_quote_in_store as u128) + (quote_amount as u128);
+        assert!(actual_quote_in_store_new <= U64_MAX, E_ADD_QUOTE_OVERFLOW);
         let base_reserve_new = math128::mul_div(
             (base_reserve as u128),
             quote_reserve_new,
             (quote_reserve as u128)
         );
-        assert!(base_reserve_new <= U64_MAX, E_ADD_BASE_OVERFLOW);
+        let base_amount = (base_reserve_new as u128) - (base_reserve as u128);
+        let actual_base_in_store_new =
+            (actual_base_in_store as u128) + (base_amount);
+        assert!(actual_base_in_store_new <= U64_MAX, E_ADD_BASE_OVERFLOW);
         primary_fungible_store::transfer(
             provider,
             pool_ref_mut.base_metadata,
             pool_address,
-            (base_reserve_new as u64) - base_reserve
+            (base_amount as u64)
         );
         primary_fungible_store::transfer(
             provider,
@@ -244,16 +251,19 @@ module constant_product_market_maker::constant_product_market_maker {
     ) acquires Pool {
         let (pool_ref_mut, base_reserve, quote_reserve) =
             check_and_borrow_pool_with_reserves_mut(pool_address);
+        let (actual_base_in_store, actual_quote_in_store) =
+            get_actual_asset_store_balances(pool_ref_mut, pool_address);
         check_collateralization(
-            pool_ref_mut,
-            pool_address,
             base_reserve,
-            quote_reserve
+            quote_reserve,
+            actual_base_in_store,
+            actual_quote_in_store,
         );
         let pool_signer = get_pool_signer(pool_ref_mut);
         let (
             input_metadata,
             input_reserve,
+            input_in_store,
             output_metadata,
             output_reserve,
             input_overflow_e_code,
@@ -262,6 +272,7 @@ module constant_product_market_maker::constant_product_market_maker {
         ) = if (input_is_base) (
             pool_ref_mut.base_metadata,
             base_reserve,
+            actual_base_in_store,
             pool_ref_mut.quote_metadata,
             quote_reserve,
             E_ADD_BASE_OVERFLOW,
@@ -270,6 +281,7 @@ module constant_product_market_maker::constant_product_market_maker {
         ) else (
             pool_ref_mut.quote_metadata,
             quote_reserve,
+            actual_quote_in_store,
             pool_ref_mut.base_metadata,
             base_reserve,
             E_ADD_QUOTE_OVERFLOW,
@@ -278,7 +290,9 @@ module constant_product_market_maker::constant_product_market_maker {
         );
         let input_reserve_new =
             (input_reserve as u128) + (input_amount as u128);
-        assert!(input_reserve_new <= U64_MAX, input_overflow_e_code);
+        let input_in_store_new =
+            (input_in_store as u128) + (input_amount as u128);
+        assert!(input_in_store_new <= U64_MAX, input_overflow_e_code);
         let output_reserve_new = math128::mul_div(
             (input_reserve as u128),
             (output_reserve as u128),
@@ -360,13 +374,11 @@ module constant_product_market_maker::constant_product_market_maker {
     }
 
     inline fun check_collateralization(
-        pool_ref: &Pool,
-        pool_address: address,
         base_reserve: u64,
         quote_reserve: u64,
+        actual_base_in_store: u64,
+        actual_quote_in_store: u64,
     ) {
-        let (actual_base_in_store, actual_quote_in_store) =
-            get_actual_asset_store_balances(pool_ref, pool_address);
         assert!(
             actual_base_in_store >= base_reserve,
             E_BASE_NOT_COLLATERALIZED
