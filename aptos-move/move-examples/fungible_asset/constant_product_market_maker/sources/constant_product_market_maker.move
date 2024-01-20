@@ -1,4 +1,5 @@
 module constant_product_market_maker::constant_product_market_maker {
+    use aptos_framework::event;
     use aptos_framework::fungible_asset::{Self, BurnRef, MintRef, Metadata};
     use aptos_framework::object::{Self, ExtendRef, Object, ObjectGroup};
     use aptos_framework::primary_fungible_store;
@@ -34,13 +35,13 @@ module constant_product_market_maker::constant_product_market_maker {
         quote_metadata: Object<Metadata>,
         base_reserve: u64,
         quote_reserve: u64,
-        fee_in_basis_points: u16,
+        fee_rate_in_basis_points: u16,
         pool_extend_ref: ExtendRef,
         lp_token_mint_ref: MintRef,
         lp_token_burn_ref: BurnRef,
     }
 
-    struct AssetMetadata {
+    struct AssetMetadata has drop, store {
         metadata_address: address,
         name: String,
         symbol: String,
@@ -55,20 +56,21 @@ module constant_product_market_maker::constant_product_market_maker {
         actual_base_in_store: u64,
         quote_reserve: u64,
         actual_quote_in_store: u64,
-        fee_in_basis_points: u16,
+        fee_rate_in_basis_points: u16,
         lp_token_metadata: AssetMetadata,
         lp_token_supply: u128
     }
 
-    struct SwapEvent {
+    #[event]
+    struct SwapEvent has drop, store {
         pool_address: address,
         swapper_address: address,
         input_asset_metadata: AssetMetadata,
         output_asset_metadata: AssetMetadata,
         input_amount: u64,
         input_is_base: bool,
-        fee_in_basis_points: u16,
-        fee_in_output_asset: u16,
+        fee_rate_in_basis_points: u16,
+        fee_in_output_asset: u64,
         output_amount_after_fees: u64,
         price_impact_including_fees_in_basis_points: u16,
     }
@@ -139,7 +141,7 @@ module constant_product_market_maker::constant_product_market_maker {
         quote_reserve: u64,
         base_metadata: Object<Metadata>,
         quote_metadata: Object<Metadata>,
-        fee_in_basis_points: u16,
+        fee_rate_in_basis_points: u16,
         lp_token_name: String,
         lp_token_symbol: String,
         lp_token_decimals: u8,
@@ -187,7 +189,7 @@ module constant_product_market_maker::constant_product_market_maker {
                 base_reserve,
                 quote_metadata,
                 quote_reserve,
-                fee_in_basis_points,
+                fee_rate_in_basis_points,
                 pool_extend_ref:
                     object::generate_extend_ref(&constructor_ref),
                 lp_token_mint_ref,
@@ -323,7 +325,7 @@ module constant_product_market_maker::constant_product_market_maker {
         let fee = math64::mul_div(
             output_amount_before_fee,
             (BASIS_POINTS_PER_UNIT as u64),
-            (pool_ref_mut.fee_in_basis_points as u64),
+            (pool_ref_mut.fee_rate_in_basis_points as u64),
         );
         let output_amount = output_amount_before_fee - fee;
         let swapper_address = signer::address_of(swapper);
@@ -341,6 +343,26 @@ module constant_product_market_maker::constant_product_market_maker {
         );
         *input_reserve_ref_mut = (input_reserve_new as u64);
         *output_reserve_ref_mut = (output_reserve_new as u64);
+        let (final_price_base, final_price_quote) = if (input_is_base)
+            (input_amount, output_amount) else (output_amount, input_amount);
+        let price_impact_including_fees_in_basis_points = price_impact(
+            base_reserve,
+            final_price_base,
+            quote_reserve,
+            final_price_quote
+        );
+        event::emit(SwapEvent {
+            pool_address,
+            swapper_address,
+            input_asset_metadata: get_asset_metadata_view(input_metadata),
+            output_asset_metadata: get_asset_metadata_view(output_metadata),
+            input_amount,
+            input_is_base,
+            fee_rate_in_basis_points: pool_ref_mut.fee_rate_in_basis_points,
+            fee_in_output_asset: fee,
+            output_amount_after_fees: output_amount,
+            price_impact_including_fees_in_basis_points
+        });
     }
 
     #[view]
@@ -369,7 +391,7 @@ module constant_product_market_maker::constant_product_market_maker {
             quote_asset_metadata: get_asset_metadata_view(quote_metadata),
             quote_reserve,
             actual_quote_in_store,
-            fee_in_basis_points: pool_ref.fee_in_basis_points,
+            fee_rate_in_basis_points: pool_ref.fee_rate_in_basis_points,
             lp_token_metadata: get_asset_metadata_view(
                 object::address_to_object<Metadata>(pool_address)
             ),
@@ -470,6 +492,15 @@ module constant_product_market_maker::constant_product_market_maker {
         pool_ref: &Pool
     ): signer {
         object::generate_signer_for_extending(&pool_ref.pool_extend_ref)
+    }
+
+    inline fun price_impact(
+        _base_initial: u64,
+        _base_final: u64,
+        _quote_initial: u64,
+        _quote_final: u64
+    ): u16 {
+        1
     }
 
 }
