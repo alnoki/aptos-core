@@ -18,6 +18,10 @@ module constant_product_market_maker::constant_product_market_maker {
     const E_MINT_AMOUNT_OVERFLOW: u64 = 3;
     /// No pool at specified address.
     const E_NO_POOL: u64 = 4;
+    /// Actual base asset in the pool is less than expected reserves.
+    const E_BASE_NOT_COLLATERALIZED: u64 = 5;
+    /// Actual quote asset in the pool is less than expected reserves.
+    const E_QUOTE_NOT_COLLATERALIZED: u64 = 6;
 
     const BASIS_POINTS_PER_UNIT: u16 = 10_000;
     const U64_MAX: u128 = 0xffffffffffffffff;
@@ -71,6 +75,12 @@ module constant_product_market_maker::constant_product_market_maker {
     ) acquires Pool {
         let (pool_ref_mut, base_reserve, quote_reserve) =
             check_and_borrow_pool_with_reserves_mut(pool_address);
+        check_collateralization(
+            pool_ref_mut,
+            pool_address,
+            base_reserve,
+            quote_reserve
+        );
         let quote_reserve_new =
             (quote_reserve as u128) + (quote_amount as u128);
         assert!(quote_reserve_new <= U64_MAX, E_ADD_QUOTE_OVERFLOW);
@@ -196,19 +206,31 @@ module constant_product_market_maker::constant_product_market_maker {
             lp_token_supply_new,
             lp_token_supply
         );
+        let (actual_base_in_store, actual_quote_in_store) =
+            get_actual_asset_store_balances(pool_ref_mut, pool_address);
+        let new_base_in_store = math128::mul_div(
+            (actual_base_in_store as u128),
+            lp_token_supply_new,
+            lp_token_supply
+        );
+        let new_quote_in_store = math128::mul_div(
+            (actual_quote_in_store as u128),
+            lp_token_supply_new,
+            lp_token_supply
+        );
         let provider_address = signer::address_of(provider);
         let pool_signer = get_pool_signer(pool_ref_mut);
         primary_fungible_store::transfer(
             &pool_signer,
             pool_ref_mut.base_metadata,
             provider_address,
-            base_reserve - (base_reserve_new as u64),
+            actual_base_in_store - (new_base_in_store as u64),
         );
         primary_fungible_store::transfer(
             &pool_signer,
             pool_ref_mut.quote_metadata,
             provider_address,
-            quote_reserve - (quote_reserve_new as u64),
+            actual_quote_in_store - (new_quote_in_store as u64),
         );
         pool_ref_mut.base_reserve = (base_reserve_new as u64);
         pool_ref_mut.quote_reserve = (quote_reserve_new as u64);
@@ -222,6 +244,12 @@ module constant_product_market_maker::constant_product_market_maker {
     ) acquires Pool {
         let (pool_ref_mut, base_reserve, quote_reserve) =
             check_and_borrow_pool_with_reserves_mut(pool_address);
+        check_collateralization(
+            pool_ref_mut,
+            pool_address,
+            base_reserve,
+            quote_reserve
+        );
         let pool_signer = get_pool_signer(pool_ref_mut);
         let (
             input_metadata,
@@ -329,6 +357,40 @@ module constant_product_market_maker::constant_product_market_maker {
         let base_reserve = pool_ref_mut.base_reserve;
         let quote_reserve = pool_ref_mut.quote_reserve;
         (pool_ref_mut, base_reserve, quote_reserve)
+    }
+
+    inline fun check_collateralization(
+        pool_ref: &Pool,
+        pool_address: address,
+        base_reserve: u64,
+        quote_reserve: u64,
+    ) {
+        let (actual_base_in_store, actual_quote_in_store) =
+            get_actual_asset_store_balances(pool_ref, pool_address);
+        assert!(
+            actual_base_in_store >= base_reserve,
+            E_BASE_NOT_COLLATERALIZED
+        );
+        assert!(
+            actual_quote_in_store >= quote_reserve,
+            E_QUOTE_NOT_COLLATERALIZED
+        );
+    }
+
+    inline fun get_actual_asset_store_balances(
+        pool_ref: &Pool,
+        pool_address: address,
+    ): (
+        u64,
+        u64,
+    ) {
+        let base_metadata = pool_ref.base_metadata;
+        let quote_metadata = pool_ref.quote_metadata;
+        let actual_base_in_store =
+            primary_fungible_store::balance(pool_address, base_metadata);
+        let actual_quote_in_store =
+            primary_fungible_store::balance(pool_address, quote_metadata);
+        (actual_base_in_store, actual_quote_in_store)
     }
 
     inline fun get_asset_metadata_view(
