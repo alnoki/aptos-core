@@ -4,6 +4,10 @@ version = "0.1.0"
 
 [addresses]
 aptos_framework = "0x1"
+constant_product_market_maker = "_"
+
+[dev-addresses]
+constant_product_market_maker = "0xc0deface"
 
 [dependencies]
 AptosFramework = { local = "../../../framework/aptos-framework" }

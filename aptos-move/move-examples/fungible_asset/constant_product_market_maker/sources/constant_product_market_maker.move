@@ -1,4 +1,4 @@
-module aptos_framework::cpmm {
+module constant_product_market_maker::constant_product_market_maker {
     use aptos_framework::fungible_asset::{Self, BurnRef, MintRef, Metadata};
     use aptos_framework::object::{Self, ExtendRef, Object, ObjectGroup};
     use aptos_framework::primary_fungible_store;
