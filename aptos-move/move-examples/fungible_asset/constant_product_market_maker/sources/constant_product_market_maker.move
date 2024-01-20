@@ -50,9 +50,12 @@ module constant_product_market_maker::constant_product_market_maker {
         base_asset_metadata: AssetMetadata,
         quote_asset_metadata: AssetMetadata,
         base_reserve: u64,
+        actual_base_in_store: u64,
         quote_reserve: u64,
+        actual_quote_in_store: u64,
         fee_in_basis_points: u16,
         lp_token_metadata: AssetMetadata,
+        lp_token_supply: u128
     }
 
     struct SwapEvent {
@@ -65,7 +68,7 @@ module constant_product_market_maker::constant_product_market_maker {
         fee_in_basis_points: u16,
         fee_in_output_asset: u16,
         output_amount_after_fees: u64,
-        slippage_after_fees_in_basis_points: u16,
+        slippage_including_fees_in_basis_points: u16,
     }
 
     public entry fun add_liquidity(
@@ -77,6 +80,7 @@ module constant_product_market_maker::constant_product_market_maker {
             check_and_borrow_pool_with_reserves_mut(pool_address);
         let (actual_base_in_store, actual_quote_in_store) =
             get_actual_asset_store_balances(pool_ref_mut, pool_address);
+        check_dead_pool(pool_ref_mut);
         check_collateralization(
             base_reserve,
             quote_reserve,
@@ -196,6 +200,8 @@ module constant_product_market_maker::constant_product_market_maker {
     ) acquires Pool {
         let (pool_ref_mut, base_reserve, quote_reserve) =
             check_and_borrow_pool_with_reserves_mut(pool_address);
+        let (actual_base_in_store, actual_quote_in_store) =
+            get_actual_asset_store_balances(pool_ref_mut, pool_address);
         let lp_token_supply = get_lp_token_supply_unchecked(pool_address);
         primary_fungible_store::burn(
             &pool_ref_mut.lp_token_burn_ref,
@@ -213,8 +219,6 @@ module constant_product_market_maker::constant_product_market_maker {
             lp_token_supply_new,
             lp_token_supply
         );
-        let (actual_base_in_store, actual_quote_in_store) =
-            get_actual_asset_store_balances(pool_ref_mut, pool_address);
         let new_base_in_store = math128::mul_div(
             (actual_base_in_store as u128),
             lp_token_supply_new,
@@ -253,6 +257,7 @@ module constant_product_market_maker::constant_product_market_maker {
             check_and_borrow_pool_with_reserves_mut(pool_address);
         let (actual_base_in_store, actual_quote_in_store) =
             get_actual_asset_store_balances(pool_ref_mut, pool_address);
+        check_dead_pool(pool_ref_mut);
         check_collateralization(
             base_reserve,
             quote_reserve,
@@ -330,18 +335,27 @@ module constant_product_market_maker::constant_product_market_maker {
     acquires Pool {
         let (pool_ref, base_reserve, quote_reserve) =
             check_and_borrow_pool_with_reserves(pool_address);
+        let (actual_base_in_store, actual_quote_in_store) =
+            get_actual_asset_store_balances(pool_ref, pool_address);
         PoolInfo {
             pool_address,
             base_asset_metadata:
                 get_asset_metadata_view(pool_ref.base_metadata),
             base_reserve,
+            actual_base_in_store,
             quote_asset_metadata:
                 get_asset_metadata_view(pool_ref.quote_metadata),
             quote_reserve,
+            actual_quote_in_store,
             fee_in_basis_points: pool_ref.fee_in_basis_points,
             lp_token_metadata: get_asset_metadata_view(
                 object::address_to_object<Metadata>(pool_address)
             ),
+            lp_token_supply: option::destroy_some(
+                fungible_asset::supply(
+                    object::address_to_object<Metadata>(pool_address)
+                )
+            )
         }
     }
 
@@ -364,10 +378,6 @@ module constant_product_market_maker::constant_product_market_maker {
     ) acquires Pool {
         assert!(exists<Pool>(pool_address), E_NO_POOL);
         let pool_ref_mut = borrow_global_mut<Pool>(pool_address);
-        assert!(
-            pool_ref_mut.base_reserve != 0 && pool_ref_mut.quote_reserve != 0,
-            E_DEAD_POOL
-        );
         let base_reserve = pool_ref_mut.base_reserve;
         let quote_reserve = pool_ref_mut.quote_reserve;
         (pool_ref_mut, base_reserve, quote_reserve)
@@ -386,6 +396,15 @@ module constant_product_market_maker::constant_product_market_maker {
         assert!(
             actual_quote_in_store >= quote_reserve,
             E_QUOTE_NOT_COLLATERALIZED
+        );
+    }
+
+    inline fun check_dead_pool(
+        pool_ref: &Pool
+    ) {
+        assert!(
+            pool_ref.base_reserve != 0 && pool_ref.quote_reserve != 0,
+            E_DEAD_POOL
         );
     }
 
