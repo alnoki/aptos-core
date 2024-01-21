@@ -282,88 +282,52 @@ module constant_product_market_maker::constant_product_market_maker {
             true,
             true,
         );
+        let swapper_address = signer::address_of(swapper);
         let pool_signer = get_pool_signer(pool_ref_mut);
         let (
+            swap_event,
             input_metadata,
-            input_reserve,
-            input_in_store,
             output_metadata,
-            output_reserve,
-            input_overflow_e_code,
+            input_reserve_new,
+            output_reserve_new
+        ) = calculate_swap_result(
+            pool_address,
+            pool_ref_mut,
+            swapper_address,
+            input_is_base,
+            input_amount,
+            base_metadata,
+            quote_metadata,
+            base_reserve,
+            actual_base_in_store,
+            quote_reserve,
+            actual_quote_in_store,
+        );
+        let (
             input_reserve_ref_mut,
             output_reserve_ref_mut,
         ) = if (input_is_base) (
-            base_metadata,
-            base_reserve,
-            actual_base_in_store,
-            quote_metadata,
-            quote_reserve,
-            E_ADD_BASE_OVERFLOW,
             &mut pool_ref_mut.base_reserve,
             &mut pool_ref_mut.quote_reserve,
         ) else (
-            quote_metadata,
-            quote_reserve,
-            actual_quote_in_store,
-            base_metadata,
-            base_reserve,
-            E_ADD_QUOTE_OVERFLOW,
             &mut pool_ref_mut.quote_reserve,
             &mut pool_ref_mut.base_reserve,
         );
-        let input_reserve_new =
-            (input_reserve as u128) + (input_amount as u128);
-        let input_in_store_new =
-            (input_in_store as u128) + (input_amount as u128);
-        assert!(input_in_store_new <= U64_MAX, input_overflow_e_code);
-        let output_reserve_new = math128::mul_div(
-            (input_reserve as u128),
-            (output_reserve as u128),
-            input_reserve_new
-        );
-        let output_amount_before_fee =
-            output_reserve - (output_reserve_new as u64);
-        let fee = math64::mul_div(
-            output_amount_before_fee,
-            (BASIS_POINTS_PER_UNIT as u64),
-            (pool_ref_mut.fee_rate_in_basis_points as u64),
-        );
-        let output_amount = output_amount_before_fee - fee;
-        let swapper_address = signer::address_of(swapper);
         primary_fungible_store::transfer(
             swapper,
             input_metadata,
             pool_address,
-            input_amount,
+            swap_event.input_amount,
         );
         primary_fungible_store::transfer(
             &pool_signer,
             output_metadata,
             swapper_address,
-            output_amount,
+            swap_event.output_amount_after_fees,
         );
         *input_reserve_ref_mut = (input_reserve_new as u64);
         *output_reserve_ref_mut = (output_reserve_new as u64);
-        let (final_price_base, final_price_quote) = if (input_is_base)
-            (input_amount, output_amount) else (output_amount, input_amount);
-        let price_impact_including_fees_in_basis_points = price_impact(
-            base_reserve,
-            final_price_base,
-            quote_reserve,
-            final_price_quote
-        );
-        event::emit(SwapEvent {
-            pool_address,
-            swapper_address,
-            input_asset_metadata: get_asset_metadata_view(input_metadata),
-            output_asset_metadata: get_asset_metadata_view(output_metadata),
-            input_amount,
-            input_is_base,
-            fee_rate_in_basis_points: pool_ref_mut.fee_rate_in_basis_points,
-            fee_in_output_asset: fee,
-            output_amount_after_fees: output_amount,
-            price_impact_including_fees_in_basis_points
-        });
+        event::emit(swap_event);
     }
 
     #[view]
@@ -398,6 +362,131 @@ module constant_product_market_maker::constant_product_market_maker {
             ),
             lp_token_supply: get_lp_token_supply_unchecked(pool_address)
         }
+    }
+
+    #[view]
+    public fun expected_swap_result(
+        swapper_address: address,
+        pool_address: address,
+        input_is_base: bool,
+        input_amount: u64,
+    ): SwapEvent
+    acquires Pool {
+        let (
+            pool_ref,
+            base_metadata,
+            quote_metadata,
+            base_reserve,
+            actual_base_in_store,
+            quote_reserve,
+            actual_quote_in_store
+        ) = check_and_borrow_pool_with_core_fields(
+            pool_address,
+            true,
+            true,
+        );
+        let (swap_event, _, _, _, _) = calculate_swap_result(
+            pool_address,
+            pool_ref,
+            swapper_address,
+            input_is_base,
+            input_amount,
+            base_metadata,
+            quote_metadata,
+            base_reserve,
+            actual_base_in_store,
+            quote_reserve,
+            actual_quote_in_store,
+        );
+        swap_event
+    }
+
+    inline fun calculate_swap_result(
+        pool_address: address,
+        pool_ref: &Pool,
+        swapper_address: address,
+        input_is_base: bool,
+        input_amount: u64,
+        base_metadata: Object<Metadata>,
+        quote_metadata: Object<Metadata>,
+        base_reserve: u64,
+        actual_base_in_store: u64,
+        quote_reserve: u64,
+        actual_quote_in_store: u64
+    ): (
+        SwapEvent,
+        Object<Metadata>,
+        Object<Metadata>,
+        u64,
+        u64,
+    ) {
+        let (
+            input_metadata,
+            input_reserve,
+            input_in_store,
+            output_metadata,
+            output_reserve,
+            input_overflow_e_code,
+        ) = if (input_is_base) (
+            base_metadata,
+            base_reserve,
+            actual_base_in_store,
+            quote_metadata,
+            quote_reserve,
+            E_ADD_BASE_OVERFLOW,
+        ) else (
+            quote_metadata,
+            quote_reserve,
+            actual_quote_in_store,
+            base_metadata,
+            base_reserve,
+            E_ADD_QUOTE_OVERFLOW,
+        );
+        let input_reserve_new =
+            (input_reserve as u128) + (input_amount as u128);
+        let input_in_store_new =
+            (input_in_store as u128) + (input_amount as u128);
+        assert!(input_in_store_new <= U64_MAX, input_overflow_e_code);
+        let output_reserve_new = math128::mul_div(
+            (input_reserve as u128),
+            (output_reserve as u128),
+            input_reserve_new
+        );
+        let output_amount_before_fee =
+            output_reserve - (output_reserve_new as u64);
+        let fee = math64::mul_div(
+            output_amount_before_fee,
+            (BASIS_POINTS_PER_UNIT as u64),
+            (pool_ref.fee_rate_in_basis_points as u64),
+        );
+        let output_amount = output_amount_before_fee - fee;
+        let (final_price_base, final_price_quote) = if (input_is_base)
+            (input_amount, output_amount) else (output_amount, input_amount);
+        let price_impact_including_fees_in_basis_points = price_impact(
+            base_reserve,
+            final_price_base,
+            quote_reserve,
+            final_price_quote
+        );
+        let swap_event = SwapEvent {
+            pool_address,
+            swapper_address,
+            input_asset_metadata: get_asset_metadata_view(input_metadata),
+            output_asset_metadata: get_asset_metadata_view(output_metadata),
+            input_amount,
+            input_is_base,
+            fee_rate_in_basis_points: pool_ref.fee_rate_in_basis_points,
+            fee_in_output_asset: fee,
+            output_amount_after_fees: output_amount,
+            price_impact_including_fees_in_basis_points
+        };
+        (
+            swap_event,
+            input_metadata,
+            output_metadata,
+            (input_reserve_new as u64),
+            (output_reserve_new as u64)
+        )
     }
 
     inline fun check_and_borrow_pool_with_core_fields(
