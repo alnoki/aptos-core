@@ -27,6 +27,7 @@ module constant_product_market_maker::constant_product_market_maker {
     const E_QUOTE_NOT_COLLATERALIZED: u64 = 7;
 
     const BASIS_POINTS_PER_UNIT: u16 = 10_000;
+    const U16_MAX: u256 = 0xffff;
     const U64_MAX: u128 = 0xffffffffffffffff;
 
     #[resource_group_member(group = ObjectGroup)]
@@ -494,13 +495,18 @@ module constant_product_market_maker::constant_product_market_maker {
         object::generate_signer_for_extending(&pool_ref.pool_extend_ref)
     }
 
+    /// See README for supporting calculations.
     inline fun price_impact(
-        _base_initial: u64,
-        _base_final: u64,
-        _quote_initial: u64,
-        _quote_final: u64
+        base_initial: u64,
+        base_final: u64,
+        quote_initial: u64,
+        quote_final: u64
     ): u16 {
-        1
+        let a = (base_final as u128) * (quote_initial as u128);
+        let b = (base_initial as u128) * (quote_final as u128);
+        let abs = if (a > b) (a - b) else (b - a);
+        let numerator = (BASIS_POINTS_PER_UNIT as u256) * (abs as u256);
+        (numerator / (a as u256) as u16)
     }
 
 }
