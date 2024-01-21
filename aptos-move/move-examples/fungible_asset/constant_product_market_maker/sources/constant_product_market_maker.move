@@ -63,6 +63,19 @@ module constant_product_market_maker::constant_product_market_maker {
     }
 
     #[event]
+    struct PoolCreationEvent has drop, store {
+        creator_address: address,
+        pool_address: address,
+        base_asset_metadata: AssetMetadata,
+        quote_asset_metadata: AssetMetadata,
+        base_reserve: u64,
+        quote_reserve: u64,
+        fee_rate_in_basis_points: u16,
+        lp_token_metadata: AssetMetadata,
+        lp_token_supply: u128
+    }
+
+    #[event]
     struct SwapEvent has drop, store {
         pool_address: address,
         swapper_address: address,
@@ -120,7 +133,7 @@ module constant_product_market_maker::constant_product_market_maker {
             pool_address,
             quote_amount
         );
-        let lp_token_supply = get_lp_token_supply_unchecked(pool_address);
+        let (_, lp_token_supply) = get_lp_token_info_unchecked(pool_address);
         let mint_amount = math128::mul_div(
             lp_token_supply,
             (quote_amount as u128),
@@ -198,6 +211,19 @@ module constant_product_market_maker::constant_product_market_maker {
                     fungible_asset::generate_burn_ref(&constructor_ref),
             },
         );
+        let (lp_token_metadata, lp_token_supply) =
+            get_lp_token_info_unchecked(pool_address);
+        event::emit(PoolCreationEvent {
+            creator_address,
+            pool_address,
+            base_asset_metadata: get_asset_metadata_view(base_metadata),
+            quote_asset_metadata: get_asset_metadata_view(quote_metadata),
+            base_reserve,
+            quote_reserve,
+            fee_rate_in_basis_points,
+            lp_token_metadata,
+            lp_token_supply,
+        });
     }
 
     public entry fun remove_liquidity(
@@ -218,13 +244,14 @@ module constant_product_market_maker::constant_product_market_maker {
             false,
             false,
         );
-        let lp_token_supply = get_lp_token_supply_unchecked(pool_address);
+        let (_, lp_token_supply) = get_lp_token_info_unchecked(pool_address);
         primary_fungible_store::burn(
             &pool_ref_mut.lp_token_burn_ref,
             signer::address_of(provider),
             lp_tokens_to_burn,
         );
-        let lp_token_supply_new = get_lp_token_supply_unchecked(pool_address);
+        let (_, lp_token_supply_new) =
+            get_lp_token_info_unchecked(pool_address);
         let base_reserve_new = math128::mul_div(
             (base_reserve as u128),
             lp_token_supply_new,
@@ -348,6 +375,8 @@ module constant_product_market_maker::constant_product_market_maker {
             false,
             false,
         );
+        let (lp_token_metadata, lp_token_supply) =
+            get_lp_token_info_unchecked(pool_address);
         PoolInfo {
             pool_address,
             base_asset_metadata: get_asset_metadata_view(base_metadata),
@@ -357,10 +386,8 @@ module constant_product_market_maker::constant_product_market_maker {
             quote_reserve,
             actual_quote_in_store,
             fee_rate_in_basis_points: pool_ref.fee_rate_in_basis_points,
-            lp_token_metadata: get_asset_metadata_view(
-                object::address_to_object<Metadata>(pool_address)
-            ),
-            lp_token_supply: get_lp_token_supply_unchecked(pool_address)
+            lp_token_metadata,
+            lp_token_supply,
         }
     }
 
@@ -568,14 +595,18 @@ module constant_product_market_maker::constant_product_market_maker {
         }
     }
 
-    inline fun get_lp_token_supply_unchecked(
+    inline fun get_lp_token_info_unchecked(
         pool_address: address,
-    ): u128 {
-        option::destroy_some(
-            fungible_asset::supply<Pool>(
-                object::address_to_object(pool_address)
-            )
-        )
+    ): (
+        AssetMetadata,
+        u128,
+    ) {
+        let metadata_object =
+            object::address_to_object<Metadata>(pool_address);
+        let lp_token_metadata = get_asset_metadata_view(metadata_object);
+        let lp_token_supply =
+            option::destroy_some(fungible_asset::supply(metadata_object));
+        (lp_token_metadata, lp_token_supply)
     }
 
     inline fun get_pool_signer(
