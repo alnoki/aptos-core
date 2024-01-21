@@ -49,7 +49,7 @@ module constant_product_market_maker::constant_product_market_maker {
         decimals: u8,
     }
 
-    struct PoolInfo {
+    struct PoolInfo has drop, store {
         pool_address: address,
         base_asset_metadata: AssetMetadata,
         quote_asset_metadata: AssetMetadata,
@@ -63,9 +63,19 @@ module constant_product_market_maker::constant_product_market_maker {
     }
 
     #[event]
+    struct LiquidityProviderEvent has drop, store {
+        liquidity_provider: address,
+        liquidity_added: bool,
+        quote_amount: u64,
+        base_amount: u64,
+        lp_tokens_amount: u64,
+        pool_info_after_operation: PoolInfo,
+    }
+
+    #[event]
     struct PoolCreationEvent has drop, store {
-        creator_address: address,
         pool_address: address,
+        creator_address: address,
         base_asset_metadata: AssetMetadata,
         quote_asset_metadata: AssetMetadata,
         base_reserve: u64,
@@ -139,14 +149,20 @@ module constant_product_market_maker::constant_product_market_maker {
             (quote_amount as u128),
             quote_reserve_new
         );
+        let provider_address = signer::address_of(provider);
         assert!(mint_amount < U64_MAX, E_MINT_AMOUNT_OVERFLOW);
         primary_fungible_store::mint(
             &pool_ref_mut.lp_token_mint_ref,
-            signer::address_of(provider),
+            provider_address,
             (mint_amount as u64),
-        );
-        pool_ref_mut.base_reserve = (base_reserve_new as u64);
-        pool_ref_mut.quote_reserve = (quote_reserve_new as u64);
+        ); event::emit(LiquidityProviderEvent {
+            liquidity_provider: provider_address,
+            liquidity_added: true,
+            quote_amount,
+            base_amount: (base_amount as u64),
+            lp_tokens_amount: (mint_amount as u64),
+            pool_info_after_operation: pool_info(pool_address)
+        })
     }
 
     public entry fun create_pool(
