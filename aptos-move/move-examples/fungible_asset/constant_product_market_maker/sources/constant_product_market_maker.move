@@ -66,8 +66,8 @@ module constant_product_market_maker::constant_product_market_maker {
     struct LiquidityProviderEvent has drop, store {
         liquidity_provider: address,
         liquidity_added: bool,
-        quote_amount: u64,
         base_amount: u64,
+        quote_amount: u64,
         lp_tokens_amount: u64,
         pool_info_after_operation: PoolInfo,
     }
@@ -155,11 +155,12 @@ module constant_product_market_maker::constant_product_market_maker {
             &pool_ref_mut.lp_token_mint_ref,
             provider_address,
             (mint_amount as u64),
-        ); event::emit(LiquidityProviderEvent {
+        );
+        event::emit(LiquidityProviderEvent {
             liquidity_provider: provider_address,
             liquidity_added: true,
-            quote_amount,
             base_amount: (base_amount as u64),
+            quote_amount,
             lp_tokens_amount: (mint_amount as u64),
             pool_info_after_operation: pool_info(pool_address)
         })
@@ -260,10 +261,11 @@ module constant_product_market_maker::constant_product_market_maker {
             false,
             false,
         );
+        let provider_address = signer::address_of(provider);
         let (_, lp_token_supply) = get_lp_token_info_unchecked(pool_address);
         primary_fungible_store::burn(
             &pool_ref_mut.lp_token_burn_ref,
-            signer::address_of(provider),
+            provider_address,
             lp_tokens_to_burn,
         );
         let (_, lp_token_supply_new) =
@@ -288,22 +290,31 @@ module constant_product_market_maker::constant_product_market_maker {
             lp_token_supply_new,
             lp_token_supply
         );
-        let provider_address = signer::address_of(provider);
         let pool_signer = get_pool_signer(pool_ref_mut);
+        let base_amount = actual_base_in_store - (new_base_in_store as u64);
+        let quote_amount = actual_quote_in_store - (new_quote_in_store as u64);
         primary_fungible_store::transfer(
             &pool_signer,
             base_metadata,
             provider_address,
-            actual_base_in_store - (new_base_in_store as u64),
+            base_amount,
         );
         primary_fungible_store::transfer(
             &pool_signer,
             quote_metadata,
             provider_address,
-            actual_quote_in_store - (new_quote_in_store as u64),
+            quote_amount,
         );
         pool_ref_mut.base_reserve = (base_reserve_new as u64);
         pool_ref_mut.quote_reserve = (quote_reserve_new as u64);
+        event::emit(LiquidityProviderEvent {
+            liquidity_provider: provider_address,
+            liquidity_added: false,
+            quote_amount,
+            base_amount,
+            lp_tokens_amount: lp_tokens_to_burn,
+            pool_info_after_operation: pool_info(pool_address)
+        })
     }
 
     public entry fun swap(
